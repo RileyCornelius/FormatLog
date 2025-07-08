@@ -1,1 +1,93 @@
 #pragma once
+
+#include <Arduino.h>
+#include "Config/Constants.h"
+#include "Config/Preamble.h"
+
+/**--------------------------------------------------------------------------------------
+ * Logger Default Settings
+ *-------------------------------------------------------------------------------------*/
+
+#ifndef LOG_STATIC_BUFFER_SIZE
+#define LOG_STATIC_BUFFER_SIZE 64
+#endif
+
+#ifndef LOG_STREAM
+#define LOG_STREAM Serial
+#endif
+
+#ifndef LOG_LEVEL
+#define LOG_LEVEL LOG_LEVEL_DEBUG
+#endif
+
+#ifndef LOG_COLOR
+#define LOG_COLOR LOG_COLOR_DISABLE
+#endif
+
+#ifndef LOG_TIME
+#define LOG_TIME LOG_TIME_ENABLE
+#endif
+
+#ifndef LOG_LEVEL_TEXT_FORMAT
+#define LOG_LEVEL_TEXT_FORMAT LOG_LEVEL_TEXT_FORMAT_FULL
+#endif
+
+#ifndef LOG_FILENAME
+#define LOG_FILENAME LOG_FILENAME_ENABLE
+#endif
+
+#ifndef LOG_PRINT_TYPE
+#define LOG_PRINT_TYPE LOG_PRINT_TYPE_FMT_FORMAT
+#endif
+
+#ifndef LOG_PREAMBLE_FORMAT
+#define LOG_PREAMBLE_FORMAT DEFAULT_PREAMBLE_FORMAT
+#endif
+
+#ifndef LOG_PREAMBLE_ARGS
+#define LOG_PREAMBLE_ARGS(level, filename, linenumber, function) DEFAULT_PREAMBLE_ARGS(level, filename, linenumber, function)
+#endif
+
+#ifndef LOG_EOL
+#define LOG_EOL "\r\n"
+#endif
+
+/**--------------------------------------------------------------------------------------
+ * Preamble Settings
+ *-------------------------------------------------------------------------------------*/
+
+#if LOG_PRINT_TYPE == LOG_PRINT_TYPE_STD_FORMAT || LOG_PRINT_TYPE == LOG_PRINT_TYPE_FMT_FORMAT
+#define FORMATTER "[{}]"
+#elif LOG_PRINT_TYPE == LOG_PRINT_TYPE_PRINTF
+#define FORMATTER "[%s]"
+#endif
+
+#if LOG_COLOR
+#define APPEND_COLOR(buf, level) buf.append(fmt::string_view(preamble::colorText(level)));
+#define APPEND_RESET_COLOR(buf) buf.append(fmt::string_view(COLOR_RESET));
+#else
+#define APPEND_COLOR(buf, level)
+#define APPEND_RESET_COLOR(buf)
+#endif
+
+#if LOG_TIME != LOG_TIME_DISABLE
+#define PREAMBLE_TIME_FORMAT FORMATTER
+#define PREAMBLE_TIME(format) preamble::formatTime(format),
+#else
+#define PREAMBLE_TIME_FORMAT
+#define PREAMBLE_TIME(format)
+#endif
+
+#if LOG_FILENAME != LOG_FILENAME_DISABLE
+#define PREAMBLE_FILENAME_FORMAT FORMATTER
+#define PREAMBLE_FILENAME(file, line, format) , preamble::formatFilename(file, line, format)
+#else
+#define PREAMBLE_FILENAME_FORMAT
+#define PREAMBLE_FILENAME(file, line, format)
+#endif
+
+#define PREAMBLE_LOG_LEVEL(level, format) preamble::logLevelText(level, format)
+
+// Default preamble format and arguments
+#define DEFAULT_PREAMBLE_FORMAT (PREAMBLE_TIME_FORMAT FORMATTER PREAMBLE_FILENAME_FORMAT " ")
+#define DEFAULT_PREAMBLE_ARGS(level, filename, linenumber, function) PREAMBLE_TIME(LOG_TIME) PREAMBLE_LOG_LEVEL(level, LOG_LEVEL_TEXT_FORMAT) PREAMBLE_FILENAME(filename, linenumber, LOG_FILENAME)

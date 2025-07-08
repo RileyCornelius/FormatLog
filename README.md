@@ -1,0 +1,11 @@
+### TODO:
+- [ ] Add std format and printf support
+- [ ] Add function to preamble setting LOG_FILENAME_LINENUMBER_FUNCTION_ENABLE
+- [ ] Add local time support
+- [ ] Use extern Logger in cpp and move log functions to cpp
+- [ ] Add static asserts
+- [ ] Add assert macro with setHalt()
+- [ ] Add file logger
+- [ ] Append preamble to LOG macros
+- [ ] Add enable and disable files
+- [ ] Add circlar buffering to logging
