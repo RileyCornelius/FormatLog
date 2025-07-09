@@ -80,7 +80,7 @@
 
 #if LOG_FILENAME != LOG_FILENAME_DISABLE
 #define PREAMBLE_FILENAME_FORMAT FORMATTER
-#define PREAMBLE_FILENAME(file, line, format) , preamble::formatFilename(file, line, format)
+#define PREAMBLE_FILENAME(file, line, func, format) , preamble::formatFilename(file, line, func, format)
 #else
 #define PREAMBLE_FILENAME_FORMAT
 #define PREAMBLE_FILENAME(file, line, format)
@@ -90,4 +90,4 @@
 
 // Default preamble format and arguments
 #define DEFAULT_PREAMBLE_FORMAT (PREAMBLE_TIME_FORMAT FORMATTER PREAMBLE_FILENAME_FORMAT " ")
-#define DEFAULT_PREAMBLE_ARGS(level, filename, linenumber, function) PREAMBLE_TIME(LOG_TIME) PREAMBLE_LOG_LEVEL(level, LOG_LEVEL_TEXT_FORMAT) PREAMBLE_FILENAME(filename, linenumber, LOG_FILENAME)
+#define DEFAULT_PREAMBLE_ARGS(level, filename, linenumber, function) PREAMBLE_TIME(LOG_TIME) PREAMBLE_LOG_LEVEL(level, LOG_LEVEL_TEXT_FORMAT) PREAMBLE_FILENAME(filename, linenumber, function, LOG_FILENAME)

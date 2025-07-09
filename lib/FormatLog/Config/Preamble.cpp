@@ -58,11 +58,9 @@ namespace preamble
         return timeFormat;
     }
 
-    const char *formatFilename(const char *path, int line = 0, int format = LOG_FILENAME_ENABLE)
+    const char *formatFilename(const char *file, int line = 0, const char *func = nullptr, int format = LOG_FILENAME_ENABLE)
     {
-        assert(path != nullptr);
-        assert(line >= 0);
-        assert(format >= LOG_FILENAME_DISABLE && format <= LOG_FILENAME_LINENUMBER_ENABLE);
+        assert(format >= LOG_FILENAME_DISABLE && format <= LOG_FILENAME_LINENUMBER_FUNCTION_ENABLE);
 
         static char result[64] = {0};
 
@@ -72,16 +70,26 @@ namespace preamble
             return result;
         }
 
-        const char *filename = strrchr(path, '/') ? strrchr(path, '/') + 1 : strrchr(path, '\\') ? strrchr(path, '\\') + 1
-                                                                                                 : path;
+        const char *filename = strrchr(file, '/') ? strrchr(file, '/') + 1 : strrchr(file, '\\') ? strrchr(file, '\\') + 1
+                                                                                                 : file;
 
-        if (format == LOG_FILENAME_LINENUMBER_ENABLE)
+        if (format == LOG_FILENAME_LINENUMBER_FUNCTION_ENABLE)
+        {
+            if (func)
+            {
+                snprintf(result, sizeof(result), "%s:%d %s()", filename, line, func);
+            }
+            else
+            {
+                snprintf(result, sizeof(result), "%s:%d", filename, line);
+            }
+        }
+        else if (format == LOG_FILENAME_LINENUMBER_ENABLE)
         {
             snprintf(result, sizeof(result), "%s:%d", filename, line);
         }
         else if (format == LOG_FILENAME_ENABLE)
         {
-            // Find the extension and truncate at the dot
             const char *dot = strrchr(filename, '.');
             if (dot)
             {
@@ -101,14 +109,15 @@ namespace preamble
 
     const char *colorText(int level)
     {
-        assert(level >= LOG_LEVEL_TRACE && level <= LOG_LEVEL_ERROR);
+        assert(level >= LOG_LEVEL_TRACE && level <= LOG_LEVEL_DISABLE);
 
         static const char *colors[] = {
             COLOR_TRACE, // White
             COLOR_DEBUG, // Green
             COLOR_INFO,  // Cyan
             COLOR_WARN,  // Yellow
-            COLOR_ERROR  // Red
+            COLOR_ERROR, // Red
+            COLOR_RESET  // Reset color
         };
 
         return colors[level];
