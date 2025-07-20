@@ -25,7 +25,7 @@
 #endif
 
 #ifndef LOG_TIME
-#define LOG_TIME LOG_TIME_ENABLE
+#define LOG_TIME LOG_TIME_DISABLE
 #endif
 
 #ifndef LOG_LEVEL_TEXT_FORMAT

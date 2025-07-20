@@ -1,6 +1,4 @@
 ### TODO:
-- [ ] Add local time support
-- [ ] Add filter by file path
 - [ ] Use extern Logger in cpp and move log functions to cpp
 - [ ] Add static asserts
 - [ ] Add assert macro with setHalt()
@@ -9,5 +7,6 @@
 - [ ] Add std format and printf support
 - [ ] Add enable and disable files
 - [ ] Add circlar buffering to logging
+- [x] Add local time support
 - [x] Add function to preamble setting LOG_FILENAME_LINENUMBER_FUNCTION_ENABLE
 - [x] Add String to fmtlib

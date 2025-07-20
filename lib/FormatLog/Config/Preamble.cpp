@@ -1,6 +1,11 @@
 #include <Arduino.h>
 #include "Config/Constants.h"
 #include <assert.h>
+#include <sys/time.h>
+
+#ifndef LOG_TIME_LOCALTIME_FORMAT
+#define LOG_TIME_LOCALTIME_FORMAT "%04d-%02d-%02d %02d:%02d:%02d.%03ld"
+#endif
 
 namespace preamble
 {
@@ -9,7 +14,7 @@ namespace preamble
         assert(level >= LOG_LEVEL_TRACE && level <= LOG_LEVEL_ERROR);
         assert(format >= LOG_LEVEL_TEXT_FORMAT_LETTER && format <= LOG_LEVEL_TEXT_FORMAT_FULL);
 
-        static const char *logLevelTexts[][5] = {
+        static const char *logLevelTexts[3][5] = {
             {"T", "D", "I", "W", "E"},                  // LOG_LEVEL_TEXT_FORMAT_LETTER
             {"TRAC", "DBUG", "INFO", "WARN", "EROR"},   // LOG_LEVEL_TEXT_FORMAT_SHORT
             {"TRACE", "DEBUG", "INFO", "WARN", "ERROR"} // LOG_LEVEL_TEXT_FORMAT_FULL
@@ -20,9 +25,9 @@ namespace preamble
 
     const char *formatTime(int format = LOG_TIME_MILLIS)
     {
-        assert(format >= LOG_TIME_DISABLE && format <= LOG_TIME_HHHHMMSSMS);
+        assert(format >= LOG_TIME_DISABLE && format <= LOG_TIME_LOCALTIME);
 
-        static char timeFormat[15] = {0};
+        static char timeFormat[64] = {0};
 
         if (format == LOG_TIME_DISABLE)
         {
@@ -30,7 +35,26 @@ namespace preamble
             return timeFormat;
         }
 
-        if (format == LOG_TIME_MICROS)
+        if (format == LOG_TIME_LOCALTIME)
+        {
+            struct tm timeinfo;
+            time_t now;
+            time(&now);
+            localtime_r(&now, &timeinfo);
+            if (timeinfo.tm_year > (2016 - 1900)) // Check if time has been initialized
+            {
+                timeval tv;
+                gettimeofday(&tv, NULL);
+                sprintf(timeFormat, LOG_TIME_LOCALTIME_FORMAT,
+                        timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday,
+                        timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec, tv.tv_usec / 1000);
+            }
+            else
+            {
+                sprintf(timeFormat, "LOCALTIME_ERROR");
+            }
+        }
+        else if (format == LOG_TIME_MICROS)
         {
             sprintf(timeFormat, "%11lu", micros());
         }

@@ -22,6 +22,7 @@ LOG_TIME
    LOG_TIME_MILLIS
    LOG_TIME_HHMMSSMS
    LOG_TIME_HHHHMMSSMS
+   LOG_TIME_LOCALTIME
 
 LOG_FILENAME
    LOG_FILENAME_DISABLE
@@ -39,15 +40,17 @@ LOG_PRINT_TYPE
    LOG_PRINT_TYPE_FMT_FORMAT
 */
 
+#ifndef LOG_LEVEL
 #define LOG_LEVEL LOG_LEVEL_TRACE
+#endif
 
 #define LOG_LEVEL_TEXT_FORMAT LOG_LEVEL_TEXT_FORMAT_SHORT
 
-#define LOG_TIME LOG_TIME_HHMMSSMS
+#define LOG_TIME LOG_TIME_LOCALTIME
 
-#define LOG_FILENAME LOG_FILENAME_LINENUMBER_FUNCTION_ENABLE
+#define LOG_FILENAME LOG_FILENAME_ENABLE
 
-#define LOG_COLOR LOG_COLOR_DISABLE
+#define LOG_COLOR LOG_COLOR_ENABLE
 
 #define LOG_STATIC_BUFFER_SIZE 128
 
@@ -58,7 +61,7 @@ LOG_PRINT_TYPE
 // #define LOG_PREAMBLE_FORMAT "[{}][{}][{}] "
 // #define LOG_PREAMBLE_ARGS(level, filename, linenumber, function) preamble::formatTime(LOG_TIME), preamble::logLevelText(level, LOG_LEVEL_TEXT_FORMAT), preamble::formatFilename(filename, linenumber, function, LOG_FILENAME)
 
-#define LOG_PREAMBLE_FORMAT "[{}] [{}{}{}] [{}] "
-#define LOG_PREAMBLE_ARGS(level, filename, linenumber, function) preamble::formatTime(LOG_TIME), preamble::colorText(level), preamble::logLevelText(level, LOG_LEVEL_TEXT_FORMAT), preamble::colorText(LOG_LEVEL_DISABLE), preamble::formatFilename(filename, linenumber, function, LOG_FILENAME)
+// #define LOG_PREAMBLE_FORMAT "[{}][{}{}{}][{}] "
+// #define LOG_PREAMBLE_ARGS(level, filename, linenumber, function) preamble::formatTime(LOG_TIME), preamble::colorText(level), preamble::logLevelText(level, LOG_LEVEL_TEXT_FORMAT), preamble::colorText(LOG_LEVEL_DISABLE), preamble::formatFilename(filename, linenumber, function, LOG_FILENAME)
 
 #include <FormatLog.h>
