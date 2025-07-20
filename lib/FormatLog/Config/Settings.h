@@ -104,3 +104,19 @@ inline void logHalt()
 // Default preamble format and arguments
 #define DEFAULT_PREAMBLE_FORMAT (PREAMBLE_TIME_FORMAT FORMATTER PREAMBLE_FILENAME_FORMAT " ")
 #define DEFAULT_PREAMBLE_ARGS(level, filename, linenumber, function) PREAMBLE_TIME(LOG_TIME) PREAMBLE_LOG_LEVEL(level, LOG_LEVEL_TEXT_FORMAT) PREAMBLE_FILENAME(filename, linenumber, function, LOG_FILENAME)
+
+/**--------------------------------------------------------------------------------------
+ * Static Assertions for Settings Validation
+ *-------------------------------------------------------------------------------------*/
+
+static_assert(LOG_LEVEL >= LOG_LEVEL_TRACE && LOG_LEVEL <= LOG_LEVEL_DISABLE,
+              "LOG_LEVEL must be between LOG_LEVEL_TRACE and LOG_LEVEL_DISABLE");
+static_assert(LOG_LEVEL_TEXT_FORMAT >= LOG_LEVEL_TEXT_FORMAT_LETTER && LOG_LEVEL_TEXT_FORMAT <= LOG_LEVEL_TEXT_FORMAT_FULL,
+              "LOG_LEVEL_TEXT_FORMAT must be either LOG_LEVEL_TEXT_FORMAT_LETTER, LOG_LEVEL_TEXT_FORMAT_SHORT or LOG_LEVEL_TEXT_FORMAT_FULL");
+static_assert(LOG_TIME >= LOG_TIME_DISABLE && LOG_TIME <= LOG_TIME_LOCALTIME,
+              "LOG_TIME must be between LOG_TIME_DISABLE and LOG_TIME_LOCALTIME");
+static_assert(LOG_FILENAME >= LOG_FILENAME_DISABLE && LOG_FILENAME <= LOG_FILENAME_LINENUMBER_FUNCTION_ENABLE,
+              "LOG_FILENAME must be between LOG_FILENAME_DISABLE and LOG_FILENAME_LINENUMBER_FUNCTION_ENABLE");
+static_assert(LOG_COLOR == LOG_COLOR_DISABLE || LOG_COLOR == LOG_COLOR_ENABLE,
+              "LOG_COLOR must be either LOG_COLOR_DISABLE or LOG_COLOR_ENABLE");
+static_assert(LOG_STATIC_BUFFER_SIZE > 0, "LOG_STATIC_BUFFER_SIZE must be greater than 0");
