@@ -28,7 +28,7 @@ private:
         fmt::basic_memory_buffer<char, LOG_STATIC_BUFFER_SIZE> buffer;
         APPEND_COLOR(buffer, level);
         fmt::format_to(fmt::appender(buffer), LOG_PREAMBLE_FORMAT, LOG_PREAMBLE_ARGS(level, loc.filename, loc.line, loc.funcname));
-        fmt::format_to(fmt::appender(buffer), format, std::forward<Args>(args)...);
+        fmt::vformat_to(fmt::appender(buffer), format, fmt::make_format_args(args...));
         APPEND_RESET_COLOR(buffer);
         buffer.append(fmt::string_view(LOG_EOL));
         serial.write(reinterpret_cast<const uint8_t *>(buffer.data()), buffer.size());
@@ -97,7 +97,7 @@ public:
     void printf(fmt::format_string<Args...> format, Args &&...args)
     {
         fmt::basic_memory_buffer<char, LOG_STATIC_BUFFER_SIZE> buffer;
-        fmt::format_to(fmt::appender(buffer), format, std::forward<Args>(args)...);
+        fmt::vformat_to(fmt::appender(buffer), format, fmt::make_format_args(args...));
         serial.write(reinterpret_cast<const uint8_t *>(buffer.data()), buffer.size());
     }
 
@@ -165,8 +165,6 @@ public:
 /**--------------------------------------------------------------------------------------
  * Logger Public Macros
  *-------------------------------------------------------------------------------------*/
-
-// #define LOG_TEST(format, ...) FormatLog::instance().test(SourceLocation(__FILE__, __LINE__, __FUNCTION__), format, ##__VA_ARGS__)
 
 #if LOG_LEVEL <= LOG_LEVEL_TRACE
 #define LOG_TRACE(format, ...) FormatLog::instance().trace(SourceLocation(__FILE__, __LINE__, __FUNCTION__), format, ##__VA_ARGS__)
