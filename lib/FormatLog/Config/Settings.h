@@ -48,6 +48,19 @@
 #define LOG_PREAMBLE_ARGS(level, filename, linenumber, function) DEFAULT_PREAMBLE_ARGS(level, filename, linenumber, function)
 #endif
 
+#ifndef LOG_HALT_FORMAT
+#define LOG_HALT_FORMAT (LOG_EOL "[ASSERT] {}:{} - {}(): ({}) {}") // /r/n[ASSERT] {file}:{line} - {func}(): ({expr}) {message}
+#endif
+
+#ifndef LOG_HALT
+inline void logHalt()
+{
+    while (true)
+        ;
+}
+#define LOG_HALT logHalt
+#endif
+
 #ifndef LOG_EOL
 #define LOG_EOL "\r\n"
 #endif

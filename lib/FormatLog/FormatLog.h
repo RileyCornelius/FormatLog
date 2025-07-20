@@ -101,6 +101,23 @@ public:
         serial.write(reinterpret_cast<const uint8_t *>(buffer.data()), buffer.size());
     }
 
+    void assertion(bool condition, const char *file, int line, const char *func, const char *expr, const char *message = "")
+    {
+        if (condition)
+        {
+            return;
+        }
+
+        fmt::basic_memory_buffer<char, LOG_STATIC_BUFFER_SIZE> buffer;
+        APPEND_COLOR(buffer, LOG_LEVEL_ERROR);
+        fmt::format_to(fmt::appender(buffer), LOG_HALT_FORMAT, file, line, func, expr, message);
+        APPEND_RESET_COLOR(buffer);
+        buffer.append(fmt::string_view(LOG_EOL));
+        serial.write(reinterpret_cast<const uint8_t *>(buffer.data()), buffer.size());
+
+        LOG_HALT();
+    }
+
     template <typename... Args>
     void trace(SourceLocation loc, fmt::format_string<Args...> format, Args &&...args)
     {
@@ -196,6 +213,8 @@ public:
 #define LOG_ERROR(format, ...)
 #endif
 
+// Extra logging Macros
+
 #if LOG_LEVEL != LOG_LEVEL_DISABLE
 #define LOG_BEGIN(baud) LOG_STREAM.begin(baud)
 #define LOG_PRINT(msg) FormatLog::instance().print(msg)
@@ -214,4 +233,14 @@ public:
 #define LOG_SET_STREAM(stream)
 #define LOG_GET_LOG_LEVEL() LogLevel::OFF
 #define LOG_SET_LOG_LEVEL(level)
+#endif
+
+// Assertions Macros
+
+#ifndef NDEBUG
+#define ASSERT(condition) FormatLog::instance().assertion(!!(condition), __FILE__, __LINE__, __func__, #condition)
+#define ASSERTM(condition, msg) FormatLog::instance().assertion(!!(condition), __FILE__, __LINE__, __func__, #condition, msg)
+#else
+#define ASSERT(condition)
+#define ASSERTM(condition, msg)
 #endif
