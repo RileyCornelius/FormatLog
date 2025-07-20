@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Config/Preamble.h"
+
 /*
 LOG_LEVEL
    LOG_LEVEL_TRACE
@@ -30,11 +32,6 @@ LOG_FILENAME
 LOG_COLOR
    LOG_COLOR_DISABLE
    LOG_COLOR_ENABLE
-
-LOG_PRINT_TYPE
-   LOG_PRINT_TYPE_PRINTF
-   LOG_PRINT_TYPE_STD_FORMAT
-   LOG_PRINT_TYPE_FMT_FORMAT
 */
 
 #ifndef LOG_LEVEL // Incase LOG_LEVEL is defined by the compiler
@@ -43,14 +40,16 @@ LOG_PRINT_TYPE
 
 #define LOG_LEVEL_TEXT_FORMAT LOG_LEVEL_TEXT_FORMAT_SHORT
 
-#define LOG_TIME LOG_TIME_DISABLE
-
-#define LOG_FILENAME LOG_FILENAME_ENABLE
-
-#define LOG_COLOR LOG_COLOR_ENABLE
+#define LOG_TIME LOG_TIME_HHHHMMSSMS
 
 #define LOG_STATIC_BUFFER_SIZE 128
 
 #define LOG_STREAM Serial
+
+#define LOG_PREAMBLE_FORMAT "[{}][{}][{}] "
+#define LOG_PREAMBLE_ARGS(level, filename, linenumber, function) preamble::formatTime(LOG_TIME), preamble::logLevelText(level, LOG_LEVEL_TEXT_FORMAT), preamble::formatFilename(filename, linenumber, function, LOG_FILENAME)
+
+// #define LOG_PREAMBLE_FORMAT "[{}][{}{}{}][{}] "
+// #define LOG_PREAMBLE_ARGS(level, filename, linenumber, function) preamble::formatTime(LOG_TIME), preamble::colorText(level), preamble::logLevelText(level, LOG_LEVEL_TEXT_FORMAT), preamble::colorText(LOG_LEVEL_DISABLE), preamble::formatFilename(filename, linenumber, function, LOG_FILENAME)
 
 #include <FormatLog.h>
