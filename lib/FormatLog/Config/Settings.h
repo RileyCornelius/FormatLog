@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Arduino.h>
-#include "Config/Constants.h"
+#include "Config/Options.h"
 #include "Config/Preamble.h"
 
 /**--------------------------------------------------------------------------------------
@@ -66,6 +66,22 @@ inline void logHalt()
 #endif
 
 /**--------------------------------------------------------------------------------------
+ * Static Assertions for Settings Validation
+ *-------------------------------------------------------------------------------------*/
+
+static_assert(LOG_LEVEL >= LOG_LEVEL_TRACE && LOG_LEVEL <= LOG_LEVEL_DISABLE,
+              "LOG_LEVEL must be between LOG_LEVEL_TRACE and LOG_LEVEL_DISABLE");
+static_assert(LOG_LEVEL_TEXT_FORMAT >= LOG_LEVEL_TEXT_FORMAT_LETTER && LOG_LEVEL_TEXT_FORMAT <= LOG_LEVEL_TEXT_FORMAT_FULL,
+              "LOG_LEVEL_TEXT_FORMAT must be either LOG_LEVEL_TEXT_FORMAT_LETTER, LOG_LEVEL_TEXT_FORMAT_SHORT or LOG_LEVEL_TEXT_FORMAT_FULL");
+static_assert(LOG_TIME >= LOG_TIME_DISABLE && LOG_TIME <= LOG_TIME_LOCALTIME,
+              "LOG_TIME must be between LOG_TIME_DISABLE and LOG_TIME_LOCALTIME");
+static_assert(LOG_FILENAME >= LOG_FILENAME_DISABLE && LOG_FILENAME <= LOG_FILENAME_LINENUMBER_FUNCTION_ENABLE,
+              "LOG_FILENAME must be between LOG_FILENAME_DISABLE and LOG_FILENAME_LINENUMBER_FUNCTION_ENABLE");
+static_assert(LOG_COLOR == LOG_COLOR_DISABLE || LOG_COLOR == LOG_COLOR_ENABLE,
+              "LOG_COLOR must be either LOG_COLOR_DISABLE or LOG_COLOR_ENABLE");
+static_assert(LOG_STATIC_BUFFER_SIZE > 0, "LOG_STATIC_BUFFER_SIZE must be greater than 0");
+
+/**--------------------------------------------------------------------------------------
  * Preamble Settings
  *-------------------------------------------------------------------------------------*/
 
@@ -85,7 +101,7 @@ inline void logHalt()
 
 #if LOG_TIME != LOG_TIME_DISABLE
 #define PREAMBLE_TIME_FORMAT FORMATTER
-#define PREAMBLE_TIME(format) preamble::formatTime(format),
+#define PREAMBLE_TIME(format) preamble::formatTime(static_cast<LogTime>(format)),
 #else
 #define PREAMBLE_TIME_FORMAT
 #define PREAMBLE_TIME(format)
@@ -93,30 +109,14 @@ inline void logHalt()
 
 #if LOG_FILENAME != LOG_FILENAME_DISABLE
 #define PREAMBLE_FILENAME_FORMAT FORMATTER
-#define PREAMBLE_FILENAME(file, line, func, format) , preamble::formatFilename(file, line, func, format)
+#define PREAMBLE_FILENAME(file, line, func, format) , preamble::formatFilename(file, line, func, static_cast<LogFilename>(format))
 #else
 #define PREAMBLE_FILENAME_FORMAT
 #define PREAMBLE_FILENAME(file, line, format)
 #endif
 
-#define PREAMBLE_LOG_LEVEL(level, format) preamble::logLevelText(level, format)
+#define PREAMBLE_LOG_LEVEL(level, format) preamble::logLevelText(level, static_cast<LogLevelTextFormat>(format))
 
 // Default preamble format and arguments
 #define DEFAULT_PREAMBLE_FORMAT (PREAMBLE_TIME_FORMAT FORMATTER PREAMBLE_FILENAME_FORMAT " ")
 #define DEFAULT_PREAMBLE_ARGS(level, filename, linenumber, function) PREAMBLE_TIME(LOG_TIME) PREAMBLE_LOG_LEVEL(level, LOG_LEVEL_TEXT_FORMAT) PREAMBLE_FILENAME(filename, linenumber, function, LOG_FILENAME)
-
-/**--------------------------------------------------------------------------------------
- * Static Assertions for Settings Validation
- *-------------------------------------------------------------------------------------*/
-
-static_assert(LOG_LEVEL >= LOG_LEVEL_TRACE && LOG_LEVEL <= LOG_LEVEL_DISABLE,
-              "LOG_LEVEL must be between LOG_LEVEL_TRACE and LOG_LEVEL_DISABLE");
-static_assert(LOG_LEVEL_TEXT_FORMAT >= LOG_LEVEL_TEXT_FORMAT_LETTER && LOG_LEVEL_TEXT_FORMAT <= LOG_LEVEL_TEXT_FORMAT_FULL,
-              "LOG_LEVEL_TEXT_FORMAT must be either LOG_LEVEL_TEXT_FORMAT_LETTER, LOG_LEVEL_TEXT_FORMAT_SHORT or LOG_LEVEL_TEXT_FORMAT_FULL");
-static_assert(LOG_TIME >= LOG_TIME_DISABLE && LOG_TIME <= LOG_TIME_LOCALTIME,
-              "LOG_TIME must be between LOG_TIME_DISABLE and LOG_TIME_LOCALTIME");
-static_assert(LOG_FILENAME >= LOG_FILENAME_DISABLE && LOG_FILENAME <= LOG_FILENAME_LINENUMBER_FUNCTION_ENABLE,
-              "LOG_FILENAME must be between LOG_FILENAME_DISABLE and LOG_FILENAME_LINENUMBER_FUNCTION_ENABLE");
-static_assert(LOG_COLOR == LOG_COLOR_DISABLE || LOG_COLOR == LOG_COLOR_ENABLE,
-              "LOG_COLOR must be either LOG_COLOR_DISABLE or LOG_COLOR_ENABLE");
-static_assert(LOG_STATIC_BUFFER_SIZE > 0, "LOG_STATIC_BUFFER_SIZE must be greater than 0");

@@ -47,10 +47,10 @@
 #define COLOR_ERROR "\e[1;91m" // Red
 
 /**--------------------------------------------------------------------------------------
- * Types
+ * Enums
  *-------------------------------------------------------------------------------------*/
 
-enum LogLevel
+enum class LogLevel
 {
     TRACE = LOG_LEVEL_TRACE,
     DEBUG = LOG_LEVEL_DEBUG,
@@ -60,42 +60,35 @@ enum LogLevel
     OFF = LOG_LEVEL_DISABLE
 };
 
-// enum LogLevelTextFormat
-// {
-//     LETTER = LOG_LEVEL_TEXT_FORMAT_LETTER,
-//     SHORT = LOG_LEVEL_TEXT_FORMAT_SHORT,
-//     FULL = LOG_LEVEL_TEXT_FORMAT_FULL
-// };
+enum class LogLevelTextFormat
+{
+    LETTER = LOG_LEVEL_TEXT_FORMAT_LETTER,
+    SHORT = LOG_LEVEL_TEXT_FORMAT_SHORT,
+    FULL = LOG_LEVEL_TEXT_FORMAT_FULL
+};
 
-// enum LogTime
-// {
-//     TIME_DISABLE = LOG_TIME_DISABLE,
-//     TIME_MICROS = LOG_TIME_MICROS,
-//     TIME_MILLIS = LOG_TIME_MILLIS,
-//     TIME_ENABLE = LOG_TIME_ENABLE,
-//     TIME_HHMMSSMS = LOG_TIME_HHMMSSMS,
-//     TIME_HHHHMMSSMS = LOG_TIME_HHHHMMSSMS
-// };
+enum class LogTime
+{
+    DISABLE = LOG_TIME_DISABLE,
+    MICROS = LOG_TIME_MICROS,
+    MILLIS = LOG_TIME_MILLIS,
+    ENABLE = LOG_TIME_ENABLE,
+    HHMMSSMS = LOG_TIME_HHMMSSMS,
+    HHHHMMSSMS = LOG_TIME_HHHHMMSSMS,
+    LOCALTIME = LOG_TIME_LOCALTIME
+};
 
-// enum LogColor
-// {
-//     COLOR_DISABLE = LOG_COLOR_DISABLE,
-//     COLOR_ENABLE = LOG_COLOR_ENABLE
-// };
+enum class LogFilename
+{
+    DISABLE = LOG_FILENAME_DISABLE,
+    ENABLE = LOG_FILENAME_ENABLE,
+    LINENUMBER_ENABLE = LOG_FILENAME_LINENUMBER_ENABLE,
+    LINENUMBER_FUNCTION_ENABLE = LOG_FILENAME_LINENUMBER_FUNCTION_ENABLE
+};
 
-// enum LogFilename
-// {
-//     FILENAME_DISABLE = LOG_FILENAME_DISABLE,
-//     FILENAME_ENABLE = LOG_FILENAME_ENABLE,
-//     FILENAME_LINENUMBER_ENABLE = LOG_FILENAME_LINENUMBER_ENABLE
-// };
-
-// enum LogPrintType
-// {
-//     PRINTF = LOG_PRINT_TYPE_PRINTF,
-//     STD_FORMAT = LOG_PRINT_TYPE_STD_FORMAT,
-//     FMT_FORMAT = LOG_PRINT_TYPE_FMT_FORMAT
-// };
+/**--------------------------------------------------------------------------------------
+ * Structs
+ *-------------------------------------------------------------------------------------*/
 
 struct SourceLocation
 {

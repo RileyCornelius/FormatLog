@@ -104,12 +104,10 @@ public:
     void assertion(bool condition, const char *file, int line, const char *func, const char *expr, const char *message = "")
     {
         if (condition)
-        {
             return;
-        }
 
         fmt::basic_memory_buffer<char, LOG_STATIC_BUFFER_SIZE> buffer;
-        APPEND_COLOR(buffer, LOG_LEVEL_ERROR);
+        APPEND_COLOR(buffer, static_cast<LogLevel>(LOG_LEVEL_ERROR));
         fmt::format_to(fmt::appender(buffer), LOG_HALT_FORMAT, file, line, func, expr, message);
         APPEND_RESET_COLOR(buffer);
         buffer.append(fmt::string_view(LOG_EOL));
