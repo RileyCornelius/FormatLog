@@ -1,9 +1,9 @@
 ### TODO:
 - [ ] Add file logger
-- [ ] Add std format and printf support
 - [ ] Add circlar buffering to logging
 - [ ] Append preamble to LOG macros
 - [ ] Use extern Logger in cpp and move log functions to cpp
+- [x] Add std format and printf support
 - [x] Add static asserts
 - [x] Add assert macro with setHalt()
 - [x] Add local time support

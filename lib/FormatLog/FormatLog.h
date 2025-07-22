@@ -35,7 +35,7 @@ private:
     }
 
     template <typename T>
-    void log(SourceLocation loc, LogLevel level, T &value)
+    void log(SourceLocation loc, LogLevel level, const T &value)
     {
         if (!shouldLog(level))
             return;
@@ -82,22 +82,31 @@ public:
     }
 
     template <typename T>
-    void print(T message)
+    void print(const T &message)
     {
         serial.print(message);
     }
 
+    template <typename... Args>
+    void print(fmt::format_string<Args...> format, Args &&...args)
+    {
+        fmt::basic_memory_buffer<char, LOG_STATIC_BUFFER_SIZE> buffer;
+        fmt::vformat_to(fmt::appender(buffer), format, fmt::make_format_args(args...));
+        serial.write(reinterpret_cast<const uint8_t *>(buffer.data()), buffer.size());
+    }
+
     template <typename T>
-    void println(T message)
+    void println(const T &message)
     {
         serial.println(message);
     }
 
     template <typename... Args>
-    void printf(fmt::format_string<Args...> format, Args &&...args)
+    void println(fmt::format_string<Args...> format, Args &&...args)
     {
         fmt::basic_memory_buffer<char, LOG_STATIC_BUFFER_SIZE> buffer;
         fmt::vformat_to(fmt::appender(buffer), format, fmt::make_format_args(args...));
+        buffer.append(fmt::string_view(LOG_EOL));
         serial.write(reinterpret_cast<const uint8_t *>(buffer.data()), buffer.size());
     }
 
@@ -123,7 +132,7 @@ public:
     }
 
     template <typename T>
-    void trace(SourceLocation loc, T value)
+    void trace(SourceLocation loc, const T &value)
     {
         log(loc, LogLevel::TRACE, value);
     }
@@ -135,7 +144,7 @@ public:
     }
 
     template <typename T>
-    void info(SourceLocation loc, T value)
+    void info(SourceLocation loc, const T &value)
     {
         log(loc, LogLevel::INFO, value);
     }
@@ -147,7 +156,7 @@ public:
     }
 
     template <typename T>
-    void debug(SourceLocation loc, T value)
+    void debug(SourceLocation loc, const T &value)
     {
         log(loc, LogLevel::DEBUG, value);
     }
@@ -159,7 +168,7 @@ public:
     }
 
     template <typename T>
-    void warn(SourceLocation loc, T value)
+    void warn(SourceLocation loc, const T &value)
     {
         log(loc, LogLevel::WARN, value);
     }
@@ -171,7 +180,7 @@ public:
     }
 
     template <typename T>
-    void error(SourceLocation loc, T value)
+    void error(SourceLocation loc, const T &value)
     {
         log(loc, LogLevel::ERROR, value);
     }
@@ -215,9 +224,8 @@ public:
 
 #if LOG_LEVEL != LOG_LEVEL_DISABLE
 #define LOG_BEGIN(baud) LOG_STREAM.begin(baud)
-#define LOG_PRINT(msg) FormatLog::instance().print(msg)
-#define LOG_PRINTLN(msg) FormatLog::instance().println(msg)
-#define LOG_PRINTF(format, ...) FormatLog::instance().printf(format, ##__VA_ARGS__)
+#define LOG_PRINT(format, ...) FormatLog::instance().print(format, ##__VA_ARGS__)
+#define LOG_PRINTLN(format, ...) FormatLog::instance().println(format, ##__VA_ARGS__)
 #define LOG_FLUSH() FormatLog::instance().flush()
 #define LOG_SET_STREAM(stream) FormatLog::instance().setStream(stream)
 #define LOG_GET_LOG_LEVEL() FormatLog::instance().getLogLevel()
@@ -226,7 +234,6 @@ public:
 #define LOG_BEGIN(baud)
 #define LOG_PRINT(msg)
 #define LOG_PRINTLN(msg)
-#define LOG_PRINTF(format, ...)
 #define LOG_FLUSH()
 #define LOG_SET_STREAM(stream)
 #define LOG_GET_LOG_LEVEL() LogLevel::OFF
