@@ -29,15 +29,11 @@
 #endif
 
 #ifndef LOG_LEVEL_TEXT_FORMAT
-#define LOG_LEVEL_TEXT_FORMAT LOG_LEVEL_TEXT_FORMAT_FULL
+#define LOG_LEVEL_TEXT_FORMAT LOG_LEVEL_TEXT_FORMAT_SHORT
 #endif
 
 #ifndef LOG_FILENAME
 #define LOG_FILENAME LOG_FILENAME_ENABLE
-#endif
-
-#ifndef LOG_PRINT_TYPE
-#define LOG_PRINT_TYPE LOG_PRINT_TYPE_FMT_FORMAT
 #endif
 
 #ifndef LOG_PREAMBLE_FORMAT
@@ -52,13 +48,13 @@
 #define LOG_HALT_FORMAT (LOG_EOL "[ASSERT] {}:{} - {}(): ({}) {}") // /r/n[ASSERT] {file}:{line} - {func}(): ({expr}) {message}
 #endif
 
-#ifndef LOG_HALT
-inline void logHalt()
+#ifndef LOG_HALT_FUNC
+inline void _logHalt()
 {
     while (true)
         ;
 }
-#define LOG_HALT logHalt
+#define LOG_HALT_FUNC _logHalt
 #endif
 
 #ifndef LOG_EOL

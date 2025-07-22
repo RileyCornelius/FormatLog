@@ -122,7 +122,7 @@ public:
         buffer.append(fmt::string_view(LOG_EOL));
         serial.write(reinterpret_cast<const uint8_t *>(buffer.data()), buffer.size());
 
-        LOG_HALT();
+        LOG_HALT_FUNC();
     }
 
     template <typename... Args>
