@@ -85,20 +85,3 @@ enum class LogFilename
     LINENUMBER_ENABLE = LOG_FILENAME_LINENUMBER_ENABLE,
     LINENUMBER_FUNCTION_ENABLE = LOG_FILENAME_LINENUMBER_FUNCTION_ENABLE
 };
-
-/**--------------------------------------------------------------------------------------
- * Structs
- *-------------------------------------------------------------------------------------*/
-
-struct SourceLocation
-{
-    const char *filename = "";
-    int line = 0;
-    const char *funcname = "";
-
-    constexpr SourceLocation() = default;
-    constexpr SourceLocation(const char *filename, int line, const char *funcname)
-        : filename{filename},
-          line{line},
-          funcname{funcname} {}
-};

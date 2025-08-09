@@ -9,7 +9,7 @@
  *-------------------------------------------------------------------------------------*/
 
 #ifndef LOG_STATIC_BUFFER_SIZE
-#define LOG_STATIC_BUFFER_SIZE 64
+#define LOG_STATIC_BUFFER_SIZE 128
 #endif
 
 #ifndef LOG_STREAM
@@ -17,7 +17,7 @@
 #endif
 
 #ifndef LOG_LEVEL
-#define LOG_LEVEL LOG_LEVEL_DEBUG
+#define LOG_LEVEL LOG_LEVEL_TRACE
 #endif
 
 #ifndef LOG_COLOR

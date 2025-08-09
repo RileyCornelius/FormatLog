@@ -1,8 +1,23 @@
 #pragma once
 
 #include <Arduino.h>
-#include "fmt.h"
+#include "FmtLib.h"
 #include "Config/Settings.h"
+
+/**--------------------------------------------------------------------------------------
+ * Structs
+ *-------------------------------------------------------------------------------------*/
+
+struct SourceLocation
+{
+    const char *filename = "";
+    int line = 0;
+    const char *funcname = "";
+
+    constexpr SourceLocation() = default;
+    constexpr SourceLocation(const char *filename, int line, const char *funcname)
+        : filename{filename}, line{line}, funcname{funcname} {}
+};
 
 /**--------------------------------------------------------------------------------------
  * Logger Class
@@ -187,7 +202,7 @@ public:
 };
 
 /**--------------------------------------------------------------------------------------
- * Logger Public Macros
+ * Logger Log Macros
  *-------------------------------------------------------------------------------------*/
 
 #if LOG_LEVEL <= LOG_LEVEL_TRACE
@@ -220,27 +235,33 @@ public:
 #define LOG_ERROR(format, ...)
 #endif
 
-// Extra logging Macros
+/**--------------------------------------------------------------------------------------
+ * Logger Extra Macros
+ *-------------------------------------------------------------------------------------*/
 
 #if LOG_LEVEL != LOG_LEVEL_DISABLE
 #define LOG_BEGIN(baud) LOG_STREAM.begin(baud)
+#define LOG_END() LOG_STREAM.end()
 #define LOG_PRINT(format, ...) FormatLog::instance().print(format, ##__VA_ARGS__)
 #define LOG_PRINTLN(format, ...) FormatLog::instance().println(format, ##__VA_ARGS__)
 #define LOG_FLUSH() FormatLog::instance().flush()
 #define LOG_SET_STREAM(stream) FormatLog::instance().setStream(stream)
-#define LOG_GET_LOG_LEVEL() FormatLog::instance().getLogLevel()
 #define LOG_SET_LOG_LEVEL(level) FormatLog::instance().setLogLevel(level)
+#define LOG_GET_LOG_LEVEL() FormatLog::instance().getLogLevel()
 #else
 #define LOG_BEGIN(baud)
-#define LOG_PRINT(msg)
-#define LOG_PRINTLN(msg)
+#define LOG_END()
+#define LOG_PRINT(format, ...)
+#define LOG_PRINTLN(format, ...)
 #define LOG_FLUSH()
 #define LOG_SET_STREAM(stream)
-#define LOG_GET_LOG_LEVEL() LogLevel::OFF
 #define LOG_SET_LOG_LEVEL(level)
+#define LOG_GET_LOG_LEVEL() LogLevel::OFF
 #endif
 
-// Assertions Macros
+/**--------------------------------------------------------------------------------------
+ * Assert Macros
+ *-------------------------------------------------------------------------------------*/
 
 #ifndef NDEBUG
 #define ASSERT(condition) FormatLog::instance().assertion(!!(condition), __FILE__, __LINE__, __func__, #condition)
