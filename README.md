@@ -24,7 +24,7 @@ FormatLog brings modern C++ formatting to Arduino development, offering a powerf
 
 ```cpp
 #include <Arduino.h>
-#include "FormatLog.h"
+#include "FmtLog.h"
 
 void setup() {
     LOG_BEGIN(9600);
@@ -59,7 +59,7 @@ These defaults provide a basic logging setup that works out of the box. You can 
 
 ### Custom Configuration Example
 
-The recommended way to use this library is to create a `Log.h` file and define all settings before including `FormatLog.h`. Then include `Log.h` instead of `FormatLog.h` across your project.
+The recommended way to use this library is to use the pre configured `FmtLog.h` or create a `Log.h` file in your project and define all settings before including `FormatLog.h`. Then include `Log.h` instead of `FormatLog.h` across your project.
 
 ```cpp
 #pragma once
@@ -266,6 +266,8 @@ void customHalt()
 
 FormatLog uses [fmtlib](https://github.com/fmtlib/fmt) for modern C++ formatting. Here are common formatting patterns:
 
+**Quick Reference**: [fmtlib cheat sheet](https://hackingcpp.com/cpp/libs/fmt.png)
+
 #### Basic Formatting
 ```cpp
 LOG_INFO("Hello {}", "World");           // String substitution
@@ -283,7 +285,7 @@ LOG_INFO("Center: '{:^10}'", "text");    // Center-aligned, width 10
 LOG_INFO("Zero-pad: '{:05d}'", 42);      // Zero-padded numbers
 ```
 
-**Quick Reference**: [fmtlib cheat sheet](https://hackingcpp.com/cpp/libs/fmt.png)
+
 
 ## Examples
 
@@ -293,8 +295,8 @@ Simple logging setup with default configuration.
 ### [Custom Configuration](examples/custom/)
 Advanced configuration with timestamps, colors, and custom preamble.
 
-### [Intermediate Example](examples/intermidate/)
-Full-featured setup demonstrating all library capabilities.
+### [Preamble Example](examples/preamble/)
+Demonstrates customizing the log preamble and formatting.
 
 ## Development
 

@@ -28,6 +28,7 @@ LOG_FILENAME
    LOG_FILENAME_DISABLE
    LOG_FILENAME_ENABLE
    LOG_FILENAME_LINENUMBER_ENABLE
+   LOG_FILENAME_LINENUMBER_FUNCTION_ENABLE
 
 LOG_COLOR
    LOG_COLOR_DISABLE
@@ -42,14 +43,12 @@ LOG_COLOR
 
 #define LOG_TIME LOG_TIME_HHHHMMSSMS
 
+#define LOG_FILENAME LOG_FILENAME_LINENUMBER_FUNCTION_ENABLE
+
+#define LOG_COLOR 1
+
 #define LOG_STATIC_BUFFER_SIZE 128
 
 #define LOG_STREAM Serial
-
-#define LOG_PREAMBLE_FORMAT "[{}][{}][{}] "
-#define LOG_PREAMBLE_ARGS(level, filename, linenumber, function) preamble::formatTime(LOG_TIME), preamble::logLevelText(level, LOG_LEVEL_TEXT_FORMAT), preamble::formatFilename(filename, linenumber, function, LOG_FILENAME)
-
-// #define LOG_PREAMBLE_FORMAT "[{}][{}{}{}][{}] "
-// #define LOG_PREAMBLE_ARGS(level, filename, linenumber, function) preamble::formatTime(LOG_TIME), preamble::colorText(level), preamble::logLevelText(level, LOG_LEVEL_TEXT_FORMAT), preamble::colorText(LOG_LEVEL_DISABLE), preamble::formatFilename(filename, linenumber, function, LOG_FILENAME)
 
 #include <FormatLog.h>
