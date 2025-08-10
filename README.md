@@ -246,14 +246,6 @@ void customHalt()
 [00:12:35:145][DEBUG][wifi.cpp:32:begin()] Connecting to WiFi: MyNetwork
 ```
 
-<!-- ## Platform Support
-
-### Tested Platforms
-- **ESP32** (all variants)
-- **ESP8266**
-- **STM32** (with Arduino framework)
-- **Raspberry Pi Pico** -->
-
 ## Dependencies
 
 ### Required
@@ -284,8 +276,6 @@ LOG_INFO("Center: '{:^10}'", "text");    // Center-aligned, width 10
 LOG_INFO("Zero-pad: '{:05d}'", 42);      // Zero-padded numbers
 ```
 
-
-
 ## Examples
 
 ### [Basic Example](examples/basic/)
@@ -302,9 +292,3 @@ Demonstrates customizing the log preamble and formatting.
 ### TODO:
 - [ ] Add file logger
 - [ ] Add circlar buffering delayed output
-- [x] Add std format and printf support
-- [x] Add static asserts
-- [x] Add assert macro with setHalt()
-- [x] Add local time support
-- [x] Add function to preamble setting LOG_FILENAME_LINENUMBER_FUNCTION_ENABLE
-- [x] Add String to fmtlib
