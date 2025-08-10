@@ -31,10 +31,6 @@
 #define LOG_FILENAME_LINENUMBER_ENABLE 2
 #define LOG_FILENAME_LINENUMBER_FUNCTION_ENABLE 3
 
-#define LOG_PRINT_TYPE_FMT_FORMAT 0
-#define LOG_PRINT_TYPE_STD_FORMAT 1
-#define LOG_PRINT_TYPE_PRINTF 2
-
 /**--------------------------------------------------------------------------------------
  * ANSI Colors
  *-------------------------------------------------------------------------------------*/

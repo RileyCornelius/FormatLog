@@ -61,6 +61,10 @@ inline void _logHalt()
 #define LOG_EOL "\r\n"
 #endif
 
+#ifndef LOG_FORMATTER
+#define LOG_FORMATTER "[{}]"
+#endif
+
 /**--------------------------------------------------------------------------------------
  * Static Assertions for Settings Validation
  *-------------------------------------------------------------------------------------*/
@@ -81,12 +85,6 @@ static_assert(LOG_STATIC_BUFFER_SIZE > 0, "LOG_STATIC_BUFFER_SIZE must be greate
  * Preamble Settings
  *-------------------------------------------------------------------------------------*/
 
-#if LOG_PRINT_TYPE == LOG_PRINT_TYPE_STD_FORMAT || LOG_PRINT_TYPE == LOG_PRINT_TYPE_FMT_FORMAT
-#define FORMATTER "[{}]"
-#elif LOG_PRINT_TYPE == LOG_PRINT_TYPE_PRINTF
-#define FORMATTER "[%s]"
-#endif
-
 #if LOG_COLOR
 #define APPEND_COLOR(buf, level) buf.append(fmt::string_view(preamble::colorText(level)));
 #define APPEND_RESET_COLOR(buf) buf.append(fmt::string_view(COLOR_RESET));
@@ -96,7 +94,7 @@ static_assert(LOG_STATIC_BUFFER_SIZE > 0, "LOG_STATIC_BUFFER_SIZE must be greate
 #endif
 
 #if LOG_TIME != LOG_TIME_DISABLE
-#define PREAMBLE_TIME_FORMAT FORMATTER
+#define PREAMBLE_TIME_FORMAT LOG_FORMATTER
 #define PREAMBLE_TIME(format) preamble::formatTime(static_cast<LogTime>(format)),
 #else
 #define PREAMBLE_TIME_FORMAT
@@ -104,15 +102,16 @@ static_assert(LOG_STATIC_BUFFER_SIZE > 0, "LOG_STATIC_BUFFER_SIZE must be greate
 #endif
 
 #if LOG_FILENAME != LOG_FILENAME_DISABLE
-#define PREAMBLE_FILENAME_FORMAT FORMATTER
+#define PREAMBLE_FILENAME_FORMAT LOG_FORMATTER
 #define PREAMBLE_FILENAME(file, line, func, format) , preamble::formatFilename(file, line, func, static_cast<LogFilename>(format))
 #else
 #define PREAMBLE_FILENAME_FORMAT
-#define PREAMBLE_FILENAME(file, line, format)
+#define PREAMBLE_FILENAME(file, line, func, format)
 #endif
 
 #define PREAMBLE_LOG_LEVEL(level, format) preamble::logLevelText(level, static_cast<LogLevelTextFormat>(format))
 
 // Default preamble format and arguments
-#define DEFAULT_PREAMBLE_FORMAT (PREAMBLE_TIME_FORMAT FORMATTER PREAMBLE_FILENAME_FORMAT " ")
+
+#define DEFAULT_PREAMBLE_FORMAT (PREAMBLE_TIME_FORMAT LOG_FORMATTER PREAMBLE_FILENAME_FORMAT " ")
 #define DEFAULT_PREAMBLE_ARGS(level, filename, linenumber, function) PREAMBLE_TIME(LOG_TIME) PREAMBLE_LOG_LEVEL(level, LOG_LEVEL_TEXT_FORMAT) PREAMBLE_FILENAME(filename, linenumber, function, LOG_FILENAME)

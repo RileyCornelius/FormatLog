@@ -46,12 +46,12 @@ FormatLog uses compile-time macros for configuration, ensuring zero overhead for
 If no configuration is provided, FormatLog uses the following defaults:
 
 ```cpp
-#define LOG_LEVEL LOG_LEVEL_DEBUG              // Debug level and above
+#define LOG_LEVEL LOG_LEVEL_TRACE              // Debug level and above
 #define LOG_TIME LOG_TIME_DISABLE              // No timestamps
 #define LOG_COLOR LOG_COLOR_DISABLE            // No color output
 #define LOG_LEVEL_TEXT_FORMAT LOG_LEVEL_TEXT_FORMAT_SHORT  // 4 character level names
 #define LOG_FILENAME LOG_FILENAME_ENABLE       // Filename only (no line/function)
-#define LOG_STATIC_BUFFER_SIZE 64              // 64-byte static buffer
+#define LOG_STATIC_BUFFER_SIZE 128              // 128 byte static buffer
 #define LOG_STREAM Serial                      // Default to Serial output
 ```
 
@@ -162,7 +162,7 @@ Options:
 ### Buffer Size
 
 ```cpp
-#define LOG_STATIC_BUFFER_SIZE 64
+#define LOG_STATIC_BUFFER_SIZE 128
 ```
 
 Sets the static buffer size for log messages. Messages shorter than this size use stack memory, while longer messages dynamically allocate memory as needed.
@@ -210,7 +210,6 @@ LOG_BEGIN(baud)          // Initialize serial communication
 LOG_PRINT(format, ...)   // Print using fmtlib without newline
 LOG_PRINTLN(format, ...) // Print using fmtlib with newline
 LOG_FLUSH()              // Flush output buffer
-LOG_SET_STREAM(stream)   // Change output stream
 LOG_SET_LOG_LEVEL(level) // Change log level at runtime
 LOG_GET_LOG_LEVEL()      // Get current log level
 ```
