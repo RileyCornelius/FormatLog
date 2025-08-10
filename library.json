@@ -1,0 +1,29 @@
+{
+    "name": "FormatLog",
+    "version": "0.1.0",
+    "description": "A modern logging library using {fmt} library for Arduino.",
+    "keywords": "logging, logger, fmt, fmtlib, format",
+    "license": "MIT",
+    "frameworks": "arduino",
+    "platforms": "*",
+    "examples": "examples/*/*.ino",
+    "author": {
+        "name": "Riley Cornelius",
+        "email": "rileyccornelius@gmail.com",
+        "maintainer": true
+    },
+    "dependencies": {
+        "RileyCornelius/FmtLib-Arduino": "*"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/RileyCornelius/FormatLog.git"
+    },
+    "export": {
+        "include": [
+            "src",
+            "examples",
+            "LICENSE"
+        ]
+    }
+}
