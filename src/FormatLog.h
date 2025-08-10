@@ -86,11 +86,6 @@ public:
         logLevel = level;
     }
 
-    void setStream(Stream &stream)
-    {
-        serial = stream;
-    }
-
     void flush()
     {
         serial.flush();
@@ -245,7 +240,6 @@ public:
 #define LOG_PRINT(format, ...) FormatLog::instance().print(format, ##__VA_ARGS__)
 #define LOG_PRINTLN(format, ...) FormatLog::instance().println(format, ##__VA_ARGS__)
 #define LOG_FLUSH() FormatLog::instance().flush()
-#define LOG_SET_STREAM(stream) FormatLog::instance().setStream(stream)
 #define LOG_SET_LOG_LEVEL(level) FormatLog::instance().setLogLevel(level)
 #define LOG_GET_LOG_LEVEL() FormatLog::instance().getLogLevel()
 #else
@@ -254,7 +248,6 @@ public:
 #define LOG_PRINT(format, ...)
 #define LOG_PRINTLN(format, ...)
 #define LOG_FLUSH()
-#define LOG_SET_STREAM(stream)
 #define LOG_SET_LOG_LEVEL(level)
 #define LOG_GET_LOG_LEVEL() LogLevel::OFF
 #endif
@@ -264,8 +257,8 @@ public:
  *-------------------------------------------------------------------------------------*/
 
 #ifndef NDEBUG
-#define ASSERT(condition) FormatLog::instance().assertion(!!(condition), __FILE__, __LINE__, __func__, #condition)
-#define ASSERTM(condition, msg) FormatLog::instance().assertion(!!(condition), __FILE__, __LINE__, __func__, #condition, msg)
+#define ASSERT(condition) FormatLog::instance().assertion(!!(condition), __FILE__, __LINE__, __FUNCTION__, #condition)
+#define ASSERTM(condition, msg) FormatLog::instance().assertion(!!(condition), __FILE__, __LINE__, __FUNCTION__, #condition, msg)
 #else
 #define ASSERT(condition)
 #define ASSERTM(condition, msg)
