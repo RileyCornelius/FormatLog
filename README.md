@@ -32,7 +32,7 @@ void setup() {
 }
 
 void loop() {
-    LOG_DEBUG("Loop iteration: {}", millis());
+    LOG_DEBUG("millis: {}", millis());
     delay(1000);
 }
 ```
@@ -82,10 +82,9 @@ The recommended way to use this library is to use the pre configured `FmtLog.h` 
 // Size of buffer before dynamic memory is used
 #define LOG_STATIC_BUFFER_SIZE 128
 
-// Default serial output
+// Serial output
 #define LOG_STREAM Serial
 
-// Include the library
 #include <FormatLog.h>
 ```
 
@@ -251,11 +250,11 @@ void customHalt()
 ### Required
 - Arduino Framework
 - STL
-- [fmt-arduino](https://github.com/RileyCornelius/fmt-arduino)
+- [FmtLib](https://github.com/RileyCornelius/fmt-arduino)
 
 ### Format String Reference
 
-FormatLog uses [fmtlib](https://github.com/fmtlib/fmt) for modern C++ formatting. Here are common formatting patterns:
+FormatLog uses [{fmt}](https://github.com/fmtlib/fmt) for modern C++ formatting. Here are common formatting patterns:
 
 **Quick Reference**: [fmtlib cheat sheet](https://hackingcpp.com/cpp/libs/fmt.png)
 
