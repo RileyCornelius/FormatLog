@@ -2,10 +2,6 @@
 #include <sys/time.h>
 #include <Arduino.h>
 
-#ifndef LOG_TIME_LOCALTIME_FORMAT
-#define LOG_TIME_LOCALTIME_FORMAT "%04d-%02d-%02d %02d:%02d:%02d.%03ld"
-#endif
-
 namespace preamble
 {
     const char *logLevelText(LogLevel level, LogLevelTextFormat format)
@@ -39,7 +35,7 @@ namespace preamble
             {
                 timeval tv;
                 gettimeofday(&tv, NULL);
-                sprintf(timeFormat, LOG_TIME_LOCALTIME_FORMAT,
+                sprintf(timeFormat, "%04d-%02d-%02d %02d:%02d:%02d.%03ld",
                         timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday,
                         timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec, tv.tv_usec / 1000);
             }
