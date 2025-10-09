@@ -1,8 +1,8 @@
 #pragma once
 
 #include <Arduino.h>
-#include "FmtLib.h"
 #include "Config/Settings.h"
+#include "FmtLib.h"
 
 /**--------------------------------------------------------------------------------------
  * Structs
@@ -256,10 +256,10 @@ public:
  * Assert Macros
  *-------------------------------------------------------------------------------------*/
 
-#ifndef NDEBUG
+#if LOG_ASSERT_ENABLE
 #define ASSERT(condition) FormatLog::instance().assertion(!!(condition), __FILE__, __LINE__, __FUNCTION__, #condition)
-#define ASSERTM(condition, msg) FormatLog::instance().assertion(!!(condition), __FILE__, __LINE__, __FUNCTION__, #condition, msg)
+#define ASSERT_M(condition, msg) FormatLog::instance().assertion(!!(condition), __FILE__, __LINE__, __FUNCTION__, #condition, msg)
 #else
 #define ASSERT(condition)
-#define ASSERTM(condition, msg)
+#define ASSERT_M(condition, msg)
 #endif

@@ -146,6 +146,14 @@ Enables ANSI color codes:
 - **WARN**: Yellow
 - **ERROR**: Red
 
+> **PlatformIO Tip**
+>
+> To see ANSI colors when using PlatformIO's serial monitor, add the following to your `platformio.ini`:
+>
+> ```ini
+> monitor_filters = direct # Needed for colors in terminal
+> ```
+
 ### File Information
 
 ```cpp
@@ -217,7 +225,7 @@ LOG_GET_LOG_LEVEL()      // Get current log level
 
 ```cpp
 ASSERT(condition)                    // Assert with automatic message
-ASSERTM(condition, message)          // Assert with custom message
+ASSERT_M(condition, message)          // Assert with custom message
 ```
 
 Assertions can be disabled by undefining `NDEBUG`. You can customize the halt behavior by defining a custom `LOG_HALT_FUNC`:

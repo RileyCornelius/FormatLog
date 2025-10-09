@@ -44,6 +44,10 @@
 #define LOG_PREAMBLE_ARGS(level, filename, linenumber, function) DEFAULT_PREAMBLE_ARGS(level, filename, linenumber, function)
 #endif
 
+#ifndef LOG_ASSERT_ENABLE
+#define LOG_ASSERT_ENABLE 1
+#endif
+
 #ifndef LOG_HALT_FORMAT
 #define LOG_HALT_FORMAT (LOG_EOL "[ASSERT] {}:{} - {}(): ({}) {}") // /r/n[ASSERT] {file}:{line} - {func}(): ({expr}) {message}
 #endif
