@@ -11,7 +11,7 @@ void setup()
     LOG_WARN("Warning message with value: {}", "char *");
     LOG_ERROR("Error message with String: {}", String("String"));
 
-    ASSERTM(1 + 1 == 3, "Math is broken!"); // -DDEBUG=1 will enable this assertion
+    ASSERT_M(1 + 1 == 3, "Math is broken!"); // -DDEBUG=1 will enable this assertion
 }
 
 void loop()

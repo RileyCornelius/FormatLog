@@ -39,14 +39,10 @@ LOG_COLOR
 
 #define LOG_LEVEL_TEXT_FORMAT LOG_LEVEL_TEXT_FORMAT_SHORT
 
-#define LOG_TIME LOG_TIME_HHHHMMSSMS
-
-#define LOG_FILENAME LOG_FILENAME_LINENUMBER_FUNCTION_ENABLE
-
-#define LOG_COLOR 1
-
-#define LOG_STATIC_BUFFER_SIZE 128
-
 #define LOG_STREAM Serial
+
+void halt(); // forward declaration custom halt function
+#define LOG_HALT_FUNC halt
+#define LOG_ASSERT_ENABLE 1
 
 #include <FormatLog.h>

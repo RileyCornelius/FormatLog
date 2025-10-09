@@ -10,8 +10,6 @@ void setup()
     LOG_INFO("Info message with value: {}", 3.14);
     LOG_WARN("Warning message with value: {}", "char *");
     LOG_ERROR("Error message with String: {}", String("String"));
-
-    ASSERTM(1 + 1 == 3, "Math is broken!");
 }
 
 void loop()
