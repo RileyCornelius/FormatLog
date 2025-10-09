@@ -1,6 +1,6 @@
 {
     "name": "FormatLog",
-    "version": "0.5.1",
+    "version": "0.5.2",
     "description": "A modern logging library using {fmt} library for Arduino.",
     "keywords": "logging, logger, fmt, fmtlib, format",
     "license": "MIT",
@@ -13,7 +13,7 @@
         "maintainer": true
     },
     "dependencies": {
-        "RileyCornelius/FmtLib-Arduino": "^11.2.0"
+        "rileyc/FmtLib": "11.2.0"
     },
     "repository": {
         "type": "git",
