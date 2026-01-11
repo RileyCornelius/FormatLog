@@ -49,21 +49,6 @@ private:
         serial->write(reinterpret_cast<const uint8_t *>(buffer.data()), buffer.size());
     }
 
-    template <typename T>
-    void log(SourceLocation loc, LogLevel level, const T &value)
-    {
-        if (!shouldLog(level))
-            return;
-
-        fmt::basic_memory_buffer<char, LOG_STATIC_BUFFER_SIZE> buffer;
-        APPEND_COLOR(buffer, level);
-        fmt::format_to(fmt::appender(buffer), LOG_PREAMBLE_FORMAT, LOG_PREAMBLE_ARGS(level, loc.filename, loc.line, loc.funcname));
-        fmt::format_to(fmt::appender(buffer), "{}", value);
-        APPEND_RESET_COLOR(buffer);
-        buffer.append(fmt::string_view(LOG_EOL));
-        serial->write(reinterpret_cast<const uint8_t *>(buffer.data()), buffer.size());
-    }
-
 public:
     FormatLog() {}
 
@@ -148,7 +133,7 @@ public:
     template <typename T>
     void trace(SourceLocation loc, const T &value)
     {
-        log(loc, LogLevel::TRACE, value);
+        trace(loc, "{}", value);
     }
 
     template <typename... Args>
@@ -160,7 +145,7 @@ public:
     template <typename T>
     void info(SourceLocation loc, const T &value)
     {
-        log(loc, LogLevel::INFO, value);
+        info(loc, "{}", value);
     }
 
     template <typename... Args>
@@ -172,7 +157,7 @@ public:
     template <typename T>
     void debug(SourceLocation loc, const T &value)
     {
-        log(loc, LogLevel::DEBUG, value);
+        debug(loc, "{}", value);
     }
 
     template <typename... Args>
@@ -184,7 +169,7 @@ public:
     template <typename T>
     void warn(SourceLocation loc, const T &value)
     {
-        log(loc, LogLevel::WARN, value);
+        warn(loc, "{}", value);
     }
 
     template <typename... Args>
@@ -196,7 +181,7 @@ public:
     template <typename T>
     void error(SourceLocation loc, const T &value)
     {
-        log(loc, LogLevel::ERROR, value);
+        error(loc, "{}", value);
     }
 };
 
