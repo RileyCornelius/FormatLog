@@ -174,6 +174,14 @@ Options:
 
 Sets the static buffer size for log messages. Messages shorter than this size use stack memory, while longer messages dynamically allocate memory as needed.
 
+### Assertion Configuration
+
+```cpp
+#define LOG_ASSERT_ENABLE 1
+```
+
+Controls whether assertion macros are active. When disabled, all ASSERT and ASSERT_M calls are compiled out completely.
+
 ### Custom Preamble
 
 You can fully customize the log message preamble by defining your own format string and arguments. This allows you to control exactly how timestamps, log levels, and file information appear in your logs.
@@ -236,12 +244,13 @@ LOG_GET_LOG_LEVEL()      // Get current log level
 ```cpp
 ASSERT(condition)                    // Assert with automatic message
 ASSERT_M(condition, message)          // Assert with custom message
+LOG_SET_PANIC_HANDLER(abort)         // Set callback function to be called when assert fails
 ```
 
-Assertions can be disabled by undefining `NDEBUG`. You can customize the halt behavior by defining a custom `LOG_HALT_FUNC`:
+Assertions are enabled by default (`LOG_ASSERT_ENABLE 1`). When an assertion fails, it logs the error and calls the panic handler. You can customize the panic handler behavior by defining a custom `LOG_PANIC_HANDLER`:
 
 ```cpp
-void customHalt()
+void customPanic()
 {
     while(true)
     {
@@ -249,7 +258,7 @@ void customHalt()
         delay(1000);
     }
 }
-#define LOG_HALT_FUNC customHalt
+#define LOG_PANIC_HANDLER customPanic
 ```
 
 ## Output Examples

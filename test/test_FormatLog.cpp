@@ -7,7 +7,7 @@
 #include "unity.h"
 
 // Forward declare custom halt used by ASSERT to prevent infinite loop
-void testHalt();
+void testPanic();
 
 /*------------------------------------------------------------------------------
  * Test Stream to capture output
@@ -43,7 +43,7 @@ TestStream gStream;
 
 // Redirect logger defaults to our test stream and custom halt before including logger headers
 #define LOG_STREAM gStream
-#define LOG_HALT_FUNC testHalt
+#define LOG_PANIC_HANDLER testPanic
 #define LOG_LEVEL LOG_LEVEL_TRACE
 #define LOG_COLOR LOG_COLOR_DISABLE
 #define LOG_TIME LOG_TIME_DISABLE
@@ -54,7 +54,7 @@ TestStream gStream;
 #include "Config/Preamble.h"
 
 bool gHalted = false;
-void testHalt() { gHalted = true; }
+void testPanic() { gHalted = true; }
 
 /*------------------------------------------------------------------------------
  * TESTS FOR FormatLog

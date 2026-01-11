@@ -25,9 +25,12 @@ struct SourceLocation
 
 class FormatLog
 {
+    using PanicHandler = void (*)();
+
 private:
     Stream *serial = nullptr;
     LogLevel logLevel = static_cast<LogLevel>(LOG_LEVEL);
+    PanicHandler panicHandler = LOG_PANIC_HANDLER;
 
     bool shouldLog(LogLevel level)
     {
@@ -73,6 +76,11 @@ public:
     void setLogLevel(LogLevel level)
     {
         logLevel = level;
+    }
+
+    void setPanicHandler(PanicHandler handler)
+    {
+        panicHandler = handler;
     }
 
     void flush()
@@ -121,7 +129,7 @@ public:
         buffer.append(fmt::string_view(LOG_EOL));
         serial->write(reinterpret_cast<const uint8_t *>(buffer.data()), buffer.size());
 
-        LOG_HALT_FUNC();
+        panicHandler();
     }
 
     template <typename... Args>
@@ -248,9 +256,11 @@ public:
 #if LOG_ASSERT_ENABLE
 #define ASSERT(condition) FormatLog::instance().assertion(!!(condition), __FILE__, __LINE__, __FUNCTION__, #condition)
 #define ASSERT_M(condition, msg) FormatLog::instance().assertion(!!(condition), __FILE__, __LINE__, __FUNCTION__, #condition, msg)
+#define LOG_SET_PANIC_HANDLER(handler) FormatLog::instance().setPanicHandler(handler)
 #else
 #define ASSERT(condition)
 #define ASSERT_M(condition, msg)
+#define LOG_SET_PANIC_HANDLER(handler)
 #endif
 
 /**--------------------------------------------------------------------------------------
