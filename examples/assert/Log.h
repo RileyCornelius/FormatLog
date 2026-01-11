@@ -33,16 +33,15 @@ LOG_COLOR
    LOG_COLOR_ENABLE
 */
 
-#ifndef LOG_LEVEL // Incase LOG_LEVEL is defined by the compiler
 #define LOG_LEVEL LOG_LEVEL_TRACE
-#endif
 
 #define LOG_LEVEL_TEXT_FORMAT LOG_LEVEL_TEXT_FORMAT_SHORT
 
 #define LOG_STREAM Serial
 
-void halt(); // forward declaration custom halt function
-#define LOG_HALT_FUNC halt
+void panic();                   // forward declaration custom halt function
+#define LOG_PANIC_HANDLER panic // set custom panic handler at compile time
+
 #define LOG_ASSERT_ENABLE 1
 
 #include <FormatLog.h>

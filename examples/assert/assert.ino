@@ -1,15 +1,15 @@
 #include <Arduino.h>
 #include "Log.h"
 
-void halt()
+void panic()
 {
-    Serial.print("Halted");
+    LOG_PRINT("Panic! System halted.");
 
     const int ledPin = LED_BUILTIN;
     pinMode(ledPin, OUTPUT);
     while (true)
     {
-        Serial.print(".");
+        LOG_PRINT(".");
         digitalWrite(ledPin, HIGH);
         delay(1000);
         digitalWrite(ledPin, LOW);
@@ -20,6 +20,7 @@ void halt()
 void setup()
 {
     LOG_BEGIN(115200);
+    LOG_SET_PANIC_HANDLER(panic); // Set custom panic handler at runtime
 
     LOG_TRACE("Trace message with value: {}", 1);
     LOG_DEBUG("Debug message with value: {}", 42);
