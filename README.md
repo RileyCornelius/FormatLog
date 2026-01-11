@@ -200,6 +200,16 @@ This gives you complete control over the log message structure while maintaining
 
 ## API Reference
 
+### Global Logger Instance
+
+The `FmtLog` macro provides direct access to the singleton logger instance. This allows you to call logger methods directly:
+
+```cpp
+FmtLog.setLogLevel(LogLevel::DEBUG);
+FmtLog.println("value: {}", value);
+FmtLog.flush();
+```
+
 ### Logging Macros
 
 ```cpp
