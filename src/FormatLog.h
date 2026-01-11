@@ -26,8 +26,8 @@ struct SourceLocation
 class FormatLog
 {
 private:
-    Stream &serial;
-    LogLevel logLevel;
+    Stream *serial = nullptr;
+    LogLevel logLevel = static_cast<LogLevel>(LOG_LEVEL);
 
     bool shouldLog(LogLevel level)
     {
@@ -46,7 +46,7 @@ private:
         fmt::vformat_to(fmt::appender(buffer), format, fmt::make_format_args(args...));
         APPEND_RESET_COLOR(buffer);
         buffer.append(fmt::string_view(LOG_EOL));
-        serial.write(reinterpret_cast<const uint8_t *>(buffer.data()), buffer.size());
+        serial->write(reinterpret_cast<const uint8_t *>(buffer.data()), buffer.size());
     }
 
     template <typename T>
@@ -61,19 +61,23 @@ private:
         fmt::format_to(fmt::appender(buffer), "{}", value);
         APPEND_RESET_COLOR(buffer);
         buffer.append(fmt::string_view(LOG_EOL));
-        serial.write(reinterpret_cast<const uint8_t *>(buffer.data()), buffer.size());
+        serial->write(reinterpret_cast<const uint8_t *>(buffer.data()), buffer.size());
     }
 
 public:
-    FormatLog(Stream &stream = LOG_STREAM) : serial(stream)
-    {
-        logLevel = static_cast<LogLevel>(LOG_LEVEL);
-    }
+    FormatLog() {}
+
+    FormatLog(Stream *stream) : serial(stream) {}
 
     static FormatLog &instance()
     {
-        static FormatLog logger;
+        static FormatLog logger(&LOG_STREAM);
         return logger;
+    }
+
+    void setSerial(Stream *stream)
+    {
+        serial = stream;
     }
 
     LogLevel getLogLevel()
@@ -88,13 +92,13 @@ public:
 
     void flush()
     {
-        serial.flush();
+        serial->flush();
     }
 
     template <typename T>
     void print(const T &message)
     {
-        serial.print(message);
+        serial->print(message);
     }
 
     template <typename... Args>
@@ -102,13 +106,13 @@ public:
     {
         fmt::basic_memory_buffer<char, LOG_STATIC_BUFFER_SIZE> buffer;
         fmt::vformat_to(fmt::appender(buffer), format, fmt::make_format_args(args...));
-        serial.write(reinterpret_cast<const uint8_t *>(buffer.data()), buffer.size());
+        serial->write(reinterpret_cast<const uint8_t *>(buffer.data()), buffer.size());
     }
 
     template <typename T>
     void println(const T &message)
     {
-        serial.println(message);
+        serial->println(message);
     }
 
     template <typename... Args>
@@ -117,7 +121,7 @@ public:
         fmt::basic_memory_buffer<char, LOG_STATIC_BUFFER_SIZE> buffer;
         fmt::vformat_to(fmt::appender(buffer), format, fmt::make_format_args(args...));
         buffer.append(fmt::string_view(LOG_EOL));
-        serial.write(reinterpret_cast<const uint8_t *>(buffer.data()), buffer.size());
+        serial->write(reinterpret_cast<const uint8_t *>(buffer.data()), buffer.size());
     }
 
     void assertion(bool condition, const char *file, int line, const char *func, const char *expr, const char *message = "")
@@ -130,7 +134,7 @@ public:
         fmt::format_to(fmt::appender(buffer), LOG_HALT_FORMAT, file, line, func, expr, message);
         APPEND_RESET_COLOR(buffer);
         buffer.append(fmt::string_view(LOG_EOL));
-        serial.write(reinterpret_cast<const uint8_t *>(buffer.data()), buffer.size());
+        serial->write(reinterpret_cast<const uint8_t *>(buffer.data()), buffer.size());
 
         LOG_HALT_FUNC();
     }
@@ -263,3 +267,9 @@ public:
 #define ASSERT(condition)
 #define ASSERT_M(condition, msg)
 #endif
+
+/**--------------------------------------------------------------------------------------
+ * Global Logger Instance
+ *-------------------------------------------------------------------------------------*/
+
+#define FmtLog FormatLog::instance()

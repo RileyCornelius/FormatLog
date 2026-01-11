@@ -49,6 +49,6 @@ LOG_COLOR
 
 // Custom Preamble - [HH:MM:SS:MS][level][filename] {msg}
 #define LOG_PREAMBLE_FORMAT "[{}][{}][{}] "
-#define LOG_PREAMBLE_ARGS(level, filename, linenumber, function) preamble::formatTime(LOG_TIME), preamble::logLevelText(level, LOG_LEVEL_TEXT_FORMAT), preamble::formatFilename(filename, linenumber, function, LOG_FILENAME)
+#define LOG_PREAMBLE_ARGS(level, filename, linenumber, function) preamble::formatTime((LogTime)LOG_TIME), preamble::logLevelText(level, (LogLevelTextFormat)LOG_LEVEL_TEXT_FORMAT), preamble::formatFilename(filename, linenumber, function, (LogFilename)LOG_FILENAME)
 
 #include <FormatLog.h>
