@@ -48,8 +48,8 @@
 #define LOG_ASSERT_ENABLE 1
 #endif
 
-#ifndef LOG_HALT_FORMAT
-#define LOG_HALT_FORMAT (LOG_EOL "[ASSERT] {}:{} - {}(): ({}) {}") // /r/n[ASSERT] {file}:{line} - {func}(): ({expr}) {message}
+#ifndef LOG_PANIC_FORMAT
+#define LOG_PANIC_FORMAT (LOG_EOL "[ASSERT] {}:{} - {}(): ({}) {}") // /r/n[ASSERT] {file}:{line} - {func}(): ({expr}) {message}
 #endif
 
 #ifndef LOG_PANIC_HANDLER
@@ -67,6 +67,18 @@ inline void _logPanic()
 
 #ifndef LOG_FORMATTER
 #define LOG_FORMATTER "[{}]"
+#endif
+
+#ifndef LOG_STORAGE_ENABLE
+#define LOG_STORAGE_ENABLE 1
+#endif
+
+#ifndef LOG_STORAGE_LEVEL
+#define LOG_STORAGE_LEVEL LOG_LEVEL_WARN
+#endif
+
+#ifndef LOG_STORAGE_FILE_PATH
+#define LOG_STORAGE_FILE_PATH "/log.txt"
 #endif
 
 /**--------------------------------------------------------------------------------------
