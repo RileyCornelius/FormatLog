@@ -81,6 +81,22 @@ inline void _logPanic()
 #define LOG_STORAGE_FILE_PATH "/log.txt"
 #endif
 
+#ifndef LOG_STORAGE_MAX_BUFFER_MESSAGES
+#define LOG_STORAGE_MAX_BUFFER_MESSAGES 32
+#endif
+
+#ifndef LOG_STORAGE_MAX_BUFFER_SIZE
+#define LOG_STORAGE_MAX_BUFFER_SIZE 4096
+#endif
+
+#ifndef LOG_STORAGE_MAX_FILE_SIZE
+#define LOG_STORAGE_MAX_FILE_SIZE 102400 // 100KB
+#endif
+
+#ifndef LOG_STORAGE_MAX_FILES
+#define LOG_STORAGE_MAX_FILES 3
+#endif
+
 /**--------------------------------------------------------------------------------------
  * Static Assertions for Settings Validation
  *-------------------------------------------------------------------------------------*/

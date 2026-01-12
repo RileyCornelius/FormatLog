@@ -6,6 +6,7 @@
 
 #if LOG_STORAGE_ENABLE
 #include "FS.h"
+#include <string>
 #endif
 
 /**--------------------------------------------------------------------------------------
@@ -41,9 +42,135 @@ private:
     LogLevel storageLogLevel = static_cast<LogLevel>(LOG_STORAGE_LEVEL);
     const char *storageFilePath = LOG_STORAGE_FILE_PATH;
 
+    // Buffering and rotation state
+    File file;
+    size_t currentMessageCount = 0;
+    size_t currentBufferSize = 0;
+    size_t currentFileSize = 0;
+    bool storageFileOpen = false;
+    bool justRotated = false; // Prevents reading stale file size after rotation
+
     bool shouldLogToStorage(LogLevel level)
     {
         return storage != nullptr && level >= storageLogLevel;
+    }
+
+    bool openStorageFile()
+    {
+        if (storageFileOpen)
+            return true;
+
+        if (storage == nullptr)
+        {
+            error(SourceLocation(__FILE__, __LINE__, __FUNCTION__), "Storage not initialized");
+            return false;
+        }
+
+        file = storage->open(storageFilePath, FILE_APPEND, true);
+        if (!file)
+        {
+            error(SourceLocation(__FILE__, __LINE__, __FUNCTION__), "Failed to open storage log file");
+            return false;
+        }
+
+        // Read file size on first open, but skip after rotation (filesystem may return stale size)
+        if (currentFileSize == 0 && !justRotated)
+        {
+            currentFileSize = file.size();
+        }
+        justRotated = false;
+        storageFileOpen = true;
+
+        return true;
+    }
+
+    void flushStorage()
+    {
+        if (!storageFileOpen || !file)
+            return;
+
+        file.flush();
+        currentMessageCount = 0;
+        currentBufferSize = 0;
+    }
+
+    void closeStorage()
+    {
+        if (!storageFileOpen)
+            return;
+
+        file.flush();
+        file.close();
+        storageFileOpen = false;
+        currentMessageCount = 0;
+        currentBufferSize = 0;
+    }
+
+    void rotateLogFiles()
+    {
+        if (LOG_STORAGE_MAX_FILES == 0) // No rotation
+            return;
+
+        // Close current file if open
+        if (storageFileOpen)
+        {
+            file.close();
+            storageFileOpen = false;
+        }
+
+        currentFileSize = 0;
+        currentMessageCount = 0;
+        currentBufferSize = 0;
+        justRotated = true;
+
+        // Parse file path to get base name and extension
+        std::string path(storageFilePath);
+        size_t lastSlash = path.find_last_of('/');
+        size_t lastDot = path.find_last_of('.');
+
+        std::string dir = (lastSlash != std::string::npos) ? path.substr(0, lastSlash + 1) : "";
+        std::string baseName = (lastSlash != std::string::npos) ? path.substr(lastSlash + 1) : path;
+        std::string name, ext;
+
+        if (lastDot != std::string::npos && lastDot > lastSlash)
+        {
+            name = baseName.substr(0, lastDot - (lastSlash + 1));
+            ext = baseName.substr(lastDot - (lastSlash + 1));
+        }
+        else
+        {
+            name = baseName;
+            ext = "";
+        }
+
+        // Delete oldest file
+        if (LOG_STORAGE_MAX_FILES > 0)
+        {
+            std::string oldestFile = dir + name + "." + std::to_string(LOG_STORAGE_MAX_FILES) + ext;
+            if (storage->exists(oldestFile.c_str()))
+            {
+                storage->remove(oldestFile.c_str());
+            }
+        }
+
+        // Rename files in reverse order
+        for (int i = LOG_STORAGE_MAX_FILES - 1; i >= 1; i--)
+        {
+            std::string oldName = dir + name + "." + std::to_string(i) + ext;
+            std::string newName = dir + name + "." + std::to_string(i + 1) + ext;
+
+            if (storage->exists(oldName.c_str()))
+            {
+                storage->rename(oldName.c_str(), newName.c_str());
+            }
+        }
+
+        // Rename current log file to .1
+        std::string rotatedName = dir + name + ".1" + ext;
+        if (storage->exists(storageFilePath))
+        {
+            storage->rename(storageFilePath, rotatedName.c_str());
+        }
     }
 
     void writeToStorage(const char *data, size_t size)
@@ -51,21 +178,37 @@ private:
         if (storage == nullptr)
         {
             error(SourceLocation(__FILE__, __LINE__, __FUNCTION__), "Storage not initialized for logging");
+            return;
         }
 
-        File file = storage->open(storageFilePath, FILE_APPEND, true);
-        if (file)
+        // Lazy initialization: open file on first write
+        if (!openStorageFile())
+            return;
+
+        size_t written = file.write(reinterpret_cast<const uint8_t *>(data), size);
+        if (written != size)
         {
-            size_t written = file.write(reinterpret_cast<const uint8_t *>(data), size);
-            file.close();
-            if (!(written == size))
-            {
-                error(SourceLocation(__FILE__, __LINE__, __FUNCTION__), "Failed to write all data to storage log file");
-            }
+            error(SourceLocation(__FILE__, __LINE__, __FUNCTION__),
+                  "Failed to write all data to storage log file: wrote {} of {} bytes", written, size);
+            return;
         }
-        else
+
+        // Update counters
+        currentBufferSize += written;
+        currentFileSize += written;
+        currentMessageCount++;
+
+        // Check if flush needed BEFORE writing next message
+        if (currentMessageCount >= LOG_STORAGE_MAX_BUFFER_MESSAGES ||
+            currentBufferSize >= LOG_STORAGE_MAX_BUFFER_SIZE)
         {
-            error(SourceLocation(__FILE__, __LINE__, __FUNCTION__), "Failed to open storage log file for writing");
+            flushStorage();
+        }
+
+        // Check if rotation needed AFTER writing
+        if (currentFileSize > LOG_STORAGE_MAX_FILE_SIZE)
+        {
+            rotateLogFiles();
         }
     }
 #endif
@@ -100,6 +243,13 @@ private:
 public:
     FormatLog(Stream &stream = Serial) : serial(stream) {}
 
+    ~FormatLog()
+    {
+#if LOG_STORAGE_ENABLE
+        closeStorage();
+#endif
+    }
+
     static FormatLog &instance()
     {
         static FormatLog logger(LOG_STREAM);
@@ -114,6 +264,10 @@ public:
 #if LOG_STORAGE_ENABLE
     void setStorage(fs::FS &fs)
     {
+        closeStorage();
+        currentFileSize = 0;
+        justRotated = false;
+
         storage = &fs;
     }
 
@@ -130,6 +284,16 @@ public:
     LogLevel getStorageLogLevel()
     {
         return storageLogLevel;
+    }
+
+    void flushStorageLog()
+    {
+        flushStorage();
+    }
+
+    void closeStorageLog()
+    {
+        closeStorage();
     }
 #endif
 
@@ -356,12 +520,15 @@ public:
 #define LOG_SET_STORAGE_FILE(path) FormatLog::instance().setStorageFilePath(path)
 #define LOG_SET_STORAGE_LEVEL(level) FormatLog::instance().setStorageLogLevel(level)
 #define LOG_GET_STORAGE_LEVEL() FormatLog::instance().getStorageLogLevel()
-
+#define LOG_FLUSH_STORAGE() FormatLog::instance().flushStorageLog()
+#define LOG_CLOSE_STORAGE() FormatLog::instance().closeStorageLog()
 #else
 #define LOG_SET_STORAGE(storage)
 #define LOG_SET_STORAGE_FILE(path)
 #define LOG_SET_STORAGE_LEVEL(level)
 #define LOG_GET_STORAGE_LEVEL() LogLevel::DISABLE
+#define LOG_FLUSH_STORAGE()
+#define LOG_CLOSE_STORAGE()
 #endif
 
 /**--------------------------------------------------------------------------------------
