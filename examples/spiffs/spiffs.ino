@@ -101,10 +101,10 @@ void setup()
 {
     LOG_BEGIN(115200);
     ASSERT(SPIFFS.begin(true));
+    LOG_SET_STORAGE(SPIFFS);
 
     delay(5000);
     cleanupLogFiles();
-    LOG_SET_STORAGE(SPIFFS);
 
     LOG_INFO("=== SPIFFS Storage Test ===");
     LOG_INFO("SPIFFS Total: {} bytes", SPIFFS.totalBytes());
