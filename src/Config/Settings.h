@@ -73,6 +73,8 @@ inline void _logPanic()
 #define LOG_STORAGE_ENABLE 1
 #endif
 
+#if LOG_STORAGE_ENABLE
+
 #ifndef LOG_STORAGE_LEVEL
 #define LOG_STORAGE_LEVEL LOG_LEVEL_WARN
 #endif
@@ -94,8 +96,15 @@ inline void _logPanic()
 #endif
 
 #ifndef LOG_STORAGE_MAX_FILES
-#define LOG_STORAGE_MAX_FILES 3
+#define LOG_STORAGE_MAX_FILES 3 // Number of rotated log files to keep. Set to 0 to disable rotation (logging stops at MAX_FILE_SIZE)
 #endif
+
+#ifndef LOG_STORAGE_FILESYSTEM
+#include <SPIFFS.h>
+#define LOG_STORAGE_FILESYSTEM SPIFFS
+#endif
+
+#endif // LOG_STORAGE_ENABLE
 
 /**--------------------------------------------------------------------------------------
  * Static Assertions for Settings Validation

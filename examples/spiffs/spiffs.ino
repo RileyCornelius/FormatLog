@@ -97,8 +97,6 @@ void cleanupLogFiles()
     }
 }
 
-#include <SD.h>
-
 void setup()
 {
     LOG_BEGIN(115200);

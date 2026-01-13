@@ -12,7 +12,7 @@ class Storage
 {
 private:
     fs::FS *fileSystem;
-    const char *filePath;
+    std::string filePath;
 
     File file;
     size_t currentMessageCount = 0;
@@ -26,10 +26,10 @@ private:
         if (fileOpen)
             return true;
 
-        if (fileSystem == nullptr)
+        if (!isMounted())
             return false;
 
-        file = fileSystem->open(filePath, FILE_APPEND, true);
+        file = fileSystem->open(filePath.c_str(), FILE_APPEND, true);
         if (!file)
             return false;
 
@@ -46,7 +46,7 @@ private:
 
     void rotate()
     {
-        // Rotation disabled
+        // Rotation disabled - logging stops at MAX_FILE_SIZE
         if (LOG_STORAGE_MAX_FILES == 0)
             return;
 
@@ -64,18 +64,17 @@ private:
         justRotated = true;
 
         // Parse file path to get base name and extension
-        std::string path(filePath);
-        size_t lastSlash = path.find_last_of('/');
-        size_t lastDot = path.find_last_of('.');
+        size_t lastSlash = filePath.find_last_of('/');
 
-        std::string dir = (lastSlash != std::string::npos) ? path.substr(0, lastSlash + 1) : "";
-        std::string baseName = (lastSlash != std::string::npos) ? path.substr(lastSlash + 1) : path;
+        std::string dir = (lastSlash != std::string::npos) ? filePath.substr(0, lastSlash + 1) : "";
+        std::string baseName = (lastSlash != std::string::npos) ? filePath.substr(lastSlash + 1) : filePath;
         std::string name, ext;
 
-        if (lastDot != std::string::npos && lastDot > lastSlash)
+        size_t dotInBase = baseName.find_last_of('.');
+        if (dotInBase != std::string::npos)
         {
-            name = baseName.substr(0, lastDot - (lastSlash + 1));
-            ext = baseName.substr(lastDot - (lastSlash + 1));
+            name = baseName.substr(0, dotInBase);
+            ext = baseName.substr(dotInBase);
         }
         else
         {
@@ -107,9 +106,9 @@ private:
 
         // Rename current log file to .1
         std::string rotatedName = dir + name + ".1" + ext;
-        if (fileSystem->exists(filePath))
+        if (fileSystem->exists(filePath.c_str()))
         {
-            fileSystem->rename(filePath, rotatedName.c_str());
+            fileSystem->rename(filePath.c_str(), rotatedName.c_str());
         }
     }
 
@@ -117,18 +116,16 @@ public:
     Storage() = default;
 
     Storage(fs::FS &fs, const char *path = LOG_STORAGE_FILE_PATH)
-        : fileSystem(&fs), filePath(path)
-    {
-    }
+        : fileSystem(&fs), filePath(path) {}
 
     ~Storage()
     {
         close();
     }
 
-    const char *getFilePath() const
+    bool isMounted() const
     {
-        return filePath;
+        return fileSystem != nullptr;
     }
 
     bool isFileOpen() const
@@ -136,8 +133,17 @@ public:
         return fileOpen;
     }
 
+    const char *getFilePath() const
+    {
+        return filePath.c_str();
+    }
+
     bool write(const char *data, size_t size)
     {
+        // Stop writing if rotation disabled and file size limit reached
+        if (LOG_STORAGE_MAX_FILES == 0 && currentFileSize >= LOG_STORAGE_MAX_FILE_SIZE)
+            return false;
+
         // Lazy initialization: open file on first write
         if (!openFile())
             return false;
@@ -146,20 +152,19 @@ public:
         if (written != size)
             return false;
 
-        // Update counters
         currentBufferSize += written;
         currentFileSize += written;
         currentMessageCount++;
 
-        // Check if flush needed BEFORE writing next message
+        // Check if auto flush needed before writing next message
         if (currentMessageCount >= LOG_STORAGE_MAX_BUFFER_MESSAGES ||
             currentBufferSize >= LOG_STORAGE_MAX_BUFFER_SIZE)
         {
             flush();
         }
 
-        // Check if rotation needed AFTER writing
-        if (currentFileSize > LOG_STORAGE_MAX_FILE_SIZE)
+        // Check if rotation needed after writing
+        if (currentFileSize >= LOG_STORAGE_MAX_FILE_SIZE)
         {
             rotate();
         }
@@ -179,10 +184,9 @@ public:
 
     void close()
     {
-        if (!fileOpen)
+        if (!fileOpen || !file)
             return;
 
-        file.flush();
         file.close();
         fileOpen = false;
         currentMessageCount = 0;

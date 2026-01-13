@@ -32,7 +32,7 @@ class FormatLog
     using PanicHandler = void (*)();
 
 private:
-    Stream &serial;
+    Stream *serial = nullptr;
     LogLevel logLevel = static_cast<LogLevel>(LOG_LEVEL);
     PanicHandler panicHandler = LOG_PANIC_HANDLER;
 
@@ -65,28 +65,28 @@ private:
         fmt::vformat_to(fmt::appender(buffer), format, fmt::make_format_args(args...));
         APPEND_RESET_COLOR(buffer);
         buffer.append(fmt::string_view(LOG_EOL));
-        serial.write(reinterpret_cast<const uint8_t *>(buffer.data()), buffer.size());
+        serial->write(reinterpret_cast<const uint8_t *>(buffer.data()), buffer.size());
 
 #if LOG_STORAGE_ENABLE
-        if (!shouldLogStorage(level))
-            return;
-
-        storage.write(buffer.data(), buffer.size());
+        if (shouldLogStorage(level))
+        {
+            storage.write(buffer.data(), buffer.size());
+        }
 #endif
     }
 
 public:
-    FormatLog(Stream &stream = Serial) : serial(stream) {}
+    FormatLog(Stream *stream = &Serial) : serial(stream) {}
 
     static FormatLog &instance()
     {
-        static FormatLog logger(LOG_STREAM);
+        static FormatLog logger(&LOG_STREAM);
         return logger;
     }
 
     void setSerial(Stream &stream)
     {
-        serial = stream;
+        serial = &stream;
     }
 
 #if LOG_STORAGE_ENABLE
@@ -134,13 +134,13 @@ public:
 
     void flush()
     {
-        serial.flush();
+        serial->flush();
     }
 
     template <typename T>
     void print(const T &message)
     {
-        serial.print(message);
+        serial->print(message);
     }
 
     template <typename... Args>
@@ -148,13 +148,13 @@ public:
     {
         fmt::basic_memory_buffer<char, LOG_STATIC_BUFFER_SIZE> buffer;
         fmt::vformat_to(fmt::appender(buffer), format, fmt::make_format_args(args...));
-        serial.write(reinterpret_cast<const uint8_t *>(buffer.data()), buffer.size());
+        serial->write(reinterpret_cast<const uint8_t *>(buffer.data()), buffer.size());
     }
 
     template <typename T>
     void println(const T &message)
     {
-        serial.println(message);
+        serial->println(message);
     }
 
     template <typename... Args>
@@ -163,12 +163,12 @@ public:
         fmt::basic_memory_buffer<char, LOG_STATIC_BUFFER_SIZE> buffer;
         fmt::vformat_to(fmt::appender(buffer), format, fmt::make_format_args(args...));
         buffer.append(fmt::string_view(LOG_EOL));
-        serial.write(reinterpret_cast<const uint8_t *>(buffer.data()), buffer.size());
+        serial->write(reinterpret_cast<const uint8_t *>(buffer.data()), buffer.size());
     }
 
 #if LOG_STORAGE_ENABLE
     template <typename T>
-    void printStorage(T &message)
+    void printStorage(const T &message)
     {
         printStorage("{}", message);
     }
@@ -194,7 +194,7 @@ public:
         fmt::format_to(fmt::appender(buffer), LOG_PANIC_FORMAT, file, line, func, expr, message);
         APPEND_RESET_COLOR(buffer);
         buffer.append(fmt::string_view(LOG_EOL));
-        serial.write(reinterpret_cast<const uint8_t *>(buffer.data()), buffer.size());
+        serial->write(reinterpret_cast<const uint8_t *>(buffer.data()), buffer.size());
 
         if (panicHandler != nullptr)
             panicHandler();
