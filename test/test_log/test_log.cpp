@@ -113,7 +113,7 @@ void test_assertion_outputs_and_halts()
     const std::string &out = gStream.str();
     // Starts with CRLF then [ASSERT]
     TEST_ASSERT_TRUE_MESSAGE(out.find("\r\n[ASSERT] ") == 0, "ASSERT prefix missing");
-    TEST_ASSERT_NOT_NULL(strstr(out.c_str(), "test_FormatLog.cpp"));
+    TEST_ASSERT_NOT_NULL(strstr(out.c_str(), "test_log.cpp"));
     TEST_ASSERT_NOT_NULL(strstr(out.c_str(), "Oops"));
     TEST_ASSERT_TRUE_MESSAGE(gHalted, "Assertion did not invoke halt function");
 }

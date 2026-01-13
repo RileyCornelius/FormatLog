@@ -90,7 +90,7 @@ int countLogFiles(fs::FS &filesystem)
 {
     int count = 0;
     const char *files[] = {
-        LOG_STORAGE_FILE_PATH,
+        "/test_log.txt",
         "/test_log.1.txt",
         "/test_log.2.txt",
         "/test_log.3.txt",

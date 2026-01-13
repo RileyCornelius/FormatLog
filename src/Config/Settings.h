@@ -99,9 +99,12 @@ inline void _logPanic()
 #define LOG_STORAGE_MAX_FILES 3 // Number of rotated log files to keep. Set to 0 to disable rotation (logging stops at MAX_FILE_SIZE)
 #endif
 
-#ifndef LOG_STORAGE_FILESYSTEM
-#include <SPIFFS.h>
-#define LOG_STORAGE_FILESYSTEM SPIFFS
+#ifndef LOG_STORAGE_PREAMBLE_FORMAT
+#define LOG_STORAGE_PREAMBLE_FORMAT DEFAULT_STORAGE_PREAMBLE_FORMAT
+#endif
+
+#ifndef LOG_STORAGE_PREAMBLE_ARGS
+#define LOG_STORAGE_PREAMBLE_ARGS(level, filename, linenumber, function) DEFAULT_STORAGE_PREAMBLE_ARGS(level, filename, linenumber, function)
 #endif
 
 #endif // LOG_STORAGE_ENABLE
@@ -121,6 +124,23 @@ static_assert(LOG_FILENAME >= LOG_FILENAME_DISABLE && LOG_FILENAME <= LOG_FILENA
 static_assert(LOG_COLOR == LOG_COLOR_DISABLE || LOG_COLOR == LOG_COLOR_ENABLE,
               "LOG_COLOR must be either LOG_COLOR_DISABLE or LOG_COLOR_ENABLE");
 static_assert(LOG_STATIC_BUFFER_SIZE > 0, "LOG_STATIC_BUFFER_SIZE must be greater than 0");
+static_assert(LOG_ASSERT_ENABLE == 0 || LOG_ASSERT_ENABLE == 1,
+              "LOG_ASSERT_ENABLE must be either 0 or 1");
+static_assert(LOG_STORAGE_ENABLE == 0 || LOG_STORAGE_ENABLE == 1,
+              "LOG_STORAGE_ENABLE must be either 0 or 1");
+
+#if LOG_STORAGE_ENABLE
+static_assert(LOG_STORAGE_LEVEL >= LOG_LEVEL_TRACE && LOG_STORAGE_LEVEL <= LOG_LEVEL_DISABLE,
+              "LOG_STORAGE_LEVEL must be between LOG_LEVEL_TRACE and LOG_LEVEL_DISABLE");
+static_assert(LOG_STORAGE_MAX_BUFFER_MESSAGES > 0,
+              "LOG_STORAGE_MAX_BUFFER_MESSAGES must be greater than 0");
+static_assert(LOG_STORAGE_MAX_BUFFER_SIZE > 0,
+              "LOG_STORAGE_MAX_BUFFER_SIZE must be greater than 0");
+static_assert(LOG_STORAGE_MAX_FILE_SIZE > 0,
+              "LOG_STORAGE_MAX_FILE_SIZE must be greater than 0");
+static_assert(LOG_STORAGE_MAX_FILES >= 0,
+              "LOG_STORAGE_MAX_FILES must be greater than or equal to 0");
+#endif
 
 /**--------------------------------------------------------------------------------------
  * Preamble Settings
@@ -152,7 +172,12 @@ static_assert(LOG_STATIC_BUFFER_SIZE > 0, "LOG_STATIC_BUFFER_SIZE must be greate
 
 #define PREAMBLE_LOG_LEVEL(level, format) preamble::logLevelText(level, static_cast<LogLevelTextFormat>(format))
 
-// Default preamble format and arguments
+/**--------------------------------------------------------------------------------------
+ * Default Preamble
+ *-------------------------------------------------------------------------------------*/
 
 #define DEFAULT_PREAMBLE_FORMAT (PREAMBLE_TIME_FORMAT LOG_FORMATTER PREAMBLE_FILENAME_FORMAT " ")
 #define DEFAULT_PREAMBLE_ARGS(level, filename, linenumber, function) PREAMBLE_TIME(LOG_TIME) PREAMBLE_LOG_LEVEL(level, LOG_LEVEL_TEXT_FORMAT) PREAMBLE_FILENAME(filename, linenumber, function, LOG_FILENAME)
+
+#define DEFAULT_STORAGE_PREAMBLE_FORMAT (PREAMBLE_TIME_FORMAT LOG_FORMATTER " ")
+#define DEFAULT_STORAGE_PREAMBLE_ARGS(level, filename, linenumber, function) PREAMBLE_TIME(LOG_TIME) PREAMBLE_LOG_LEVEL(level, LOG_LEVEL_TEXT_FORMAT)

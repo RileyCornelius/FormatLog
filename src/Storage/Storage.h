@@ -138,7 +138,7 @@ public:
         return filePath.c_str();
     }
 
-    bool write(const char *data, size_t size)
+    bool write(const uint8_t *data, size_t size)
     {
         // Stop writing if rotation disabled and file size limit reached
         if (LOG_STORAGE_MAX_FILES == 0 && currentFileSize >= LOG_STORAGE_MAX_FILE_SIZE)
@@ -148,7 +148,7 @@ public:
         if (!openFile())
             return false;
 
-        size_t written = file.write(reinterpret_cast<const uint8_t *>(data), size);
+        size_t written = file.write(data, size);
         if (written != size)
             return false;
 

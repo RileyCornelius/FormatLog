@@ -39,19 +39,17 @@ private:
 #if LOG_STORAGE_ENABLE
     Storage storage;
     LogLevel storageLogLevel = static_cast<LogLevel>(LOG_STORAGE_LEVEL);
+
+    bool shouldLogStorage(LogLevel level)
+    {
+        return level >= storageLogLevel;
+    }
 #endif
 
     bool shouldLog(LogLevel level)
     {
         return level >= logLevel;
     }
-
-#if LOG_STORAGE_ENABLE
-    bool shouldLogStorage(LogLevel level)
-    {
-        return level >= storageLogLevel;
-    }
-#endif
 
     template <typename... Args>
     void log(SourceLocation loc, LogLevel level, fmt::format_string<Args...> format, Args &&...args)
@@ -68,10 +66,14 @@ private:
         serial->write(reinterpret_cast<const uint8_t *>(buffer.data()), buffer.size());
 
 #if LOG_STORAGE_ENABLE
-        if (shouldLogStorage(level))
-        {
-            storage.write(buffer.data(), buffer.size());
-        }
+        if (!shouldLogStorage(level))
+            return;
+
+        buffer.clear();
+        fmt::format_to(fmt::appender(buffer), LOG_STORAGE_PREAMBLE_FORMAT, LOG_STORAGE_PREAMBLE_ARGS(level, loc.filename, loc.line, loc.funcname));
+        fmt::vformat_to(fmt::appender(buffer), format, fmt::make_format_args(args...));
+        buffer.append(fmt::string_view(LOG_EOL));
+        storage.write(reinterpret_cast<const uint8_t *>(buffer.data()), buffer.size());
 #endif
     }
 
@@ -179,8 +181,7 @@ public:
         fmt::basic_memory_buffer<char, LOG_STATIC_BUFFER_SIZE> buffer;
         fmt::vformat_to(fmt::appender(buffer), format, fmt::make_format_args(args...));
         buffer.append(fmt::string_view(LOG_EOL));
-
-        storage.write(buffer.data(), buffer.size());
+        storage.write(reinterpret_cast<const uint8_t *>(buffer.data()), buffer.size());
     }
 #endif
 
@@ -337,14 +338,16 @@ public:
 
 #if LOG_STORAGE_ENABLE
 #define LOG_SET_STORAGE(storage) FormatLog::instance().setStorage(storage)
-#define LOG_SET_STORAGE_LEVEL(level) FormatLog::instance().setStorageLogLevel(level)
-#define LOG_GET_STORAGE_LEVEL() FormatLog::instance().getStorageLogLevel()
+#define LOG_SET_STORAGE_FILE_PATH(storage, filePath) FormatLog::instance().setStorage(storage, filePath)
+#define LOG_SET_STORAGE_LOG_LEVEL(level) FormatLog::instance().setStorageLogLevel(level)
+#define LOG_GET_STORAGE_LOG_LEVEL() FormatLog::instance().getStorageLogLevel()
 #define LOG_FLUSH_STORAGE() FormatLog::instance().flushStorage()
 #define LOG_CLOSE_STORAGE() FormatLog::instance().closeStorage()
 #else
 #define LOG_SET_STORAGE(storage)
-#define LOG_SET_STORAGE_LEVEL(level)
-#define LOG_GET_STORAGE_LEVEL() LogLevel::DISABLE
+#define LOG_SET_STORAGE_FILE_PATH(storage, filePath)
+#define LOG_SET_STORAGE_LOG_LEVEL(level)
+#define LOG_GET_STORAGE_LOG_LEVEL() LogLevel::DISABLE
 #define LOG_FLUSH_STORAGE()
 #define LOG_CLOSE_STORAGE()
 #endif
