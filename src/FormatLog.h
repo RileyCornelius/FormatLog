@@ -55,26 +55,26 @@ private:
     template <typename... Args>
     void log(SourceLocation loc, LogLevel level, fmt::format_string<Args...> format, Args &&...args)
     {
-        if (!shouldLog(level))
-            return;
-
-        fmt::basic_memory_buffer<char, LOG_STATIC_BUFFER_SIZE> buffer;
-        APPEND_COLOR(buffer, level);
-        fmt::format_to(fmt::appender(buffer), LOG_PREAMBLE_FORMAT, LOG_PREAMBLE_ARGS(level, loc.filename, loc.line, loc.funcname));
-        fmt::vformat_to(fmt::appender(buffer), format, fmt::make_format_args(args...));
-        APPEND_RESET_COLOR(buffer);
-        buffer.append(fmt::string_view(LOG_EOL));
-        serial->write(reinterpret_cast<const uint8_t *>(buffer.data()), buffer.size());
+        if (shouldLog(level))
+        {
+            fmt::basic_memory_buffer<char, LOG_STATIC_BUFFER_SIZE> buffer;
+            APPEND_COLOR(buffer, level);
+            fmt::format_to(fmt::appender(buffer), LOG_PREAMBLE_FORMAT, LOG_PREAMBLE_ARGS(level, loc.filename, loc.line, loc.funcname));
+            fmt::vformat_to(fmt::appender(buffer), format, fmt::make_format_args(args...));
+            APPEND_RESET_COLOR(buffer);
+            buffer.append(fmt::string_view(LOG_EOL));
+            serial->write(reinterpret_cast<const uint8_t *>(buffer.data()), buffer.size());
+        }
 
 #if LOG_STORAGE_ENABLE
-        if (!shouldLogStorage(level))
-            return;
-
-        buffer.clear();
-        fmt::format_to(fmt::appender(buffer), LOG_STORAGE_PREAMBLE_FORMAT, LOG_STORAGE_PREAMBLE_ARGS(level, loc.filename, loc.line, loc.funcname));
-        fmt::vformat_to(fmt::appender(buffer), format, fmt::make_format_args(args...));
-        buffer.append(fmt::string_view(LOG_EOL));
-        storage->write(reinterpret_cast<const uint8_t *>(buffer.data()), buffer.size());
+        if (shouldLogStorage(level))
+        {
+            fmt::basic_memory_buffer<char, LOG_STATIC_BUFFER_SIZE> buffer;
+            fmt::format_to(fmt::appender(buffer), LOG_STORAGE_PREAMBLE_FORMAT, LOG_STORAGE_PREAMBLE_ARGS(level, loc.filename, loc.line, loc.funcname));
+            fmt::vformat_to(fmt::appender(buffer), format, fmt::make_format_args(args...));
+            buffer.append(fmt::string_view(LOG_EOL));
+            storage->write(reinterpret_cast<const uint8_t *>(buffer.data()), buffer.size());
+        }
 #endif
     }
 
@@ -99,7 +99,7 @@ public:
 
 #if LOG_STORAGE_ENABLE
     // Must be called before any logging to storage
-    void setFileSystem(fs::FS &fs, const char *filePath = LOG_STORAGE_FILE_PATH)
+    void setStorage(fs::FS &fs, const char *filePath = LOG_STORAGE_FILE_PATH)
     {
         storage = std::make_unique<Storage>(fs, filePath);
     }
@@ -276,31 +276,31 @@ public:
  * Logger Log Macros
  *-------------------------------------------------------------------------------------*/
 
-#if LOG_LEVEL <= LOG_LEVEL_TRACE
+#if LOG_LEVEL <= LOG_LEVEL_TRACE || (LOG_STORAGE_ENABLE && LOG_STORAGE_LEVEL <= LOG_LEVEL_TRACE)
 #define LOG_TRACE(format, ...) FormatLog::instance().trace(SourceLocation(__FILE__, __LINE__, __FUNCTION__), format, ##__VA_ARGS__)
 #else
 #define LOG_TRACE(format, ...)
 #endif
 
-#if LOG_LEVEL <= LOG_LEVEL_DEBUG
+#if LOG_LEVEL <= LOG_LEVEL_DEBUG || (LOG_STORAGE_ENABLE && LOG_STORAGE_LEVEL <= LOG_LEVEL_DEBUG)
 #define LOG_DEBUG(format, ...) FormatLog::instance().debug(SourceLocation(__FILE__, __LINE__, __FUNCTION__), format, ##__VA_ARGS__)
 #else
 #define LOG_DEBUG(format, ...)
 #endif
 
-#if LOG_LEVEL <= LOG_LEVEL_INFO
+#if LOG_LEVEL <= LOG_LEVEL_INFO || (LOG_STORAGE_ENABLE && LOG_STORAGE_LEVEL <= LOG_LEVEL_INFO)
 #define LOG_INFO(format, ...) FormatLog::instance().info(SourceLocation(__FILE__, __LINE__, __FUNCTION__), format, ##__VA_ARGS__)
 #else
 #define LOG_INFO(format, ...)
 #endif
 
-#if LOG_LEVEL <= LOG_LEVEL_WARN
+#if LOG_LEVEL <= LOG_LEVEL_WARN || (LOG_STORAGE_ENABLE && LOG_STORAGE_LEVEL <= LOG_LEVEL_WARN)
 #define LOG_WARN(format, ...) FormatLog::instance().warn(SourceLocation(__FILE__, __LINE__, __FUNCTION__), format, ##__VA_ARGS__)
 #else
 #define LOG_WARN(format, ...)
 #endif
 
-#if LOG_LEVEL <= LOG_LEVEL_ERROR
+#if LOG_LEVEL <= LOG_LEVEL_ERROR || (LOG_STORAGE_ENABLE && LOG_STORAGE_LEVEL <= LOG_LEVEL_ERROR)
 #define LOG_ERROR(format, ...) FormatLog::instance().error(SourceLocation(__FILE__, __LINE__, __FUNCTION__), format, ##__VA_ARGS__)
 #else
 #define LOG_ERROR(format, ...)
@@ -347,15 +347,15 @@ public:
  *-------------------------------------------------------------------------------------*/
 
 #if LOG_STORAGE_ENABLE
-#define LOG_SET_FILE_SYSTEM(fs) FormatLog::instance().setFileSystem(fs)
-#define LOG_SET_FILE_SYSTEM_FILE_PATH(fs, filePath) FormatLog::instance().setFileSystem(fs, filePath)
+#define LOG_SET_STORAGE(fs) FormatLog::instance().setStorage(fs)
+#define LOG_SET_STORAGE_FILE_PATH(fs, filePath) FormatLog::instance().setStorage(fs, filePath)
 #define LOG_SET_STORAGE_LOG_LEVEL(level) FormatLog::instance().setStorageLogLevel(level)
 #define LOG_GET_STORAGE_LOG_LEVEL() FormatLog::instance().getStorageLogLevel()
 #define LOG_FLUSH_STORAGE() FormatLog::instance().flushStorage()
 #define LOG_CLOSE_STORAGE() FormatLog::instance().closeStorage()
 #else
-#define LOG_SET_FILE_SYSTEM(fs)
-#define LOG_SET_FILE_SYSTEM_FILE_PATH(fs, filePath)
+#define LOG_SET_STORAGE(fs)
+#define LOG_SET_STORAGE_FILE_PATH(fs, filePath)
 #define LOG_SET_STORAGE_LOG_LEVEL(level)
 #define LOG_GET_STORAGE_LOG_LEVEL() LogLevel::DISABLE
 #define LOG_FLUSH_STORAGE()
