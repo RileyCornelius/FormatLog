@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Arduino.h>
+#include <memory>
 #include "Config/Settings.h"
 #include "FmtLib.h"
 
@@ -37,12 +38,12 @@ private:
     PanicHandler panicHandler = LOG_PANIC_HANDLER;
 
 #if LOG_STORAGE_ENABLE
-    Storage storage;
+    std::unique_ptr<Storage> storage;
     LogLevel storageLogLevel = static_cast<LogLevel>(LOG_STORAGE_LEVEL);
 
     bool shouldLogStorage(LogLevel level)
     {
-        return level >= storageLogLevel;
+        return storage && level >= storageLogLevel;
     }
 #endif
 
@@ -73,12 +74,17 @@ private:
         fmt::format_to(fmt::appender(buffer), LOG_STORAGE_PREAMBLE_FORMAT, LOG_STORAGE_PREAMBLE_ARGS(level, loc.filename, loc.line, loc.funcname));
         fmt::vformat_to(fmt::appender(buffer), format, fmt::make_format_args(args...));
         buffer.append(fmt::string_view(LOG_EOL));
-        storage.write(reinterpret_cast<const uint8_t *>(buffer.data()), buffer.size());
+        storage->write(reinterpret_cast<const uint8_t *>(buffer.data()), buffer.size());
 #endif
     }
 
 public:
     FormatLog(Stream *stream = &Serial) : serial(stream) {}
+
+#if LOG_STORAGE_ENABLE
+    FormatLog(Stream *stream, fs::FS &fs, const char *filePath = LOG_STORAGE_FILE_PATH)
+        : serial(stream), storage(std::make_unique<Storage>(fs, filePath)) {}
+#endif
 
     static FormatLog &instance()
     {
@@ -93,9 +99,9 @@ public:
 
 #if LOG_STORAGE_ENABLE
     // Must be called before any logging to storage
-    void setStorage(fs::FS &fs, const char *filePath = LOG_STORAGE_FILE_PATH)
+    void setFileSystem(fs::FS &fs, const char *filePath = LOG_STORAGE_FILE_PATH)
     {
-        storage = Storage(fs, filePath);
+        storage = std::make_unique<Storage>(fs, filePath);
     }
 
     void setStorageLogLevel(LogLevel level)
@@ -110,12 +116,14 @@ public:
 
     void flushStorage()
     {
-        storage.flush();
+        if (storage)
+            storage->flush();
     }
 
     void closeStorage()
     {
-        storage.close();
+        if (storage)
+            storage->close();
     }
 #endif
 
@@ -178,10 +186,12 @@ public:
     template <typename... Args>
     void printStorage(fmt::format_string<Args...> format, Args &&...args)
     {
+        if (!storage)
+            return;
         fmt::basic_memory_buffer<char, LOG_STATIC_BUFFER_SIZE> buffer;
         fmt::vformat_to(fmt::appender(buffer), format, fmt::make_format_args(args...));
         buffer.append(fmt::string_view(LOG_EOL));
-        storage.write(reinterpret_cast<const uint8_t *>(buffer.data()), buffer.size());
+        storage->write(reinterpret_cast<const uint8_t *>(buffer.data()), buffer.size());
     }
 #endif
 
@@ -315,7 +325,7 @@ public:
 #define LOG_PRINTLN(format, ...)
 #define LOG_FLUSH()
 #define LOG_SET_LOG_LEVEL(level)
-#define LOG_GET_LOG_LEVEL() LogLevel::OFF
+#define LOG_GET_LOG_LEVEL() LogLevel::DISABLE
 #endif
 
 /**--------------------------------------------------------------------------------------
@@ -337,15 +347,15 @@ public:
  *-------------------------------------------------------------------------------------*/
 
 #if LOG_STORAGE_ENABLE
-#define LOG_SET_STORAGE(storage) FormatLog::instance().setStorage(storage)
-#define LOG_SET_STORAGE_FILE_PATH(storage, filePath) FormatLog::instance().setStorage(storage, filePath)
+#define LOG_SET_FILE_SYSTEM(fs) FormatLog::instance().setFileSystem(fs)
+#define LOG_SET_FILE_SYSTEM_FILE_PATH(fs, filePath) FormatLog::instance().setFileSystem(fs, filePath)
 #define LOG_SET_STORAGE_LOG_LEVEL(level) FormatLog::instance().setStorageLogLevel(level)
 #define LOG_GET_STORAGE_LOG_LEVEL() FormatLog::instance().getStorageLogLevel()
 #define LOG_FLUSH_STORAGE() FormatLog::instance().flushStorage()
 #define LOG_CLOSE_STORAGE() FormatLog::instance().closeStorage()
 #else
-#define LOG_SET_STORAGE(storage)
-#define LOG_SET_STORAGE_FILE_PATH(storage, filePath)
+#define LOG_SET_FILE_SYSTEM(fs)
+#define LOG_SET_FILE_SYSTEM_FILE_PATH(fs, filePath)
 #define LOG_SET_STORAGE_LOG_LEVEL(level)
 #define LOG_GET_STORAGE_LOG_LEVEL() LogLevel::DISABLE
 #define LOG_FLUSH_STORAGE()
