@@ -103,16 +103,9 @@ void setup()
 {
     LOG_BEGIN(115200);
     ASSERT(SPIFFS.begin(true));
-    SPIFFS.exists("/");
-
-    fs::FS f = SPIFFS;
-    // f.exists
-
-    // SD.
 
     delay(5000);
     cleanupLogFiles();
-
     LOG_SET_STORAGE(SPIFFS);
 
     LOG_INFO("=== SPIFFS Storage Test ===");
@@ -123,8 +116,6 @@ void setup()
     LOG_INFO("Max file size: {} bytes", LOG_STORAGE_MAX_FILE_SIZE);
     LOG_INFO("Max files: {}", LOG_STORAGE_MAX_FILES);
     LOG_INFO("===========================");
-
-    delay(1000);
 
     randomSeed(analogRead(A0));
 }
@@ -191,7 +182,7 @@ void loop()
             if (resetCount >= 5)
             {
                 LOG_INFO("=== FINAL TEST COMPLETE - 5 cycles finished ===");
-                FmtLog.closeStorageLog();
+                FmtLog.closeStorage();
             }
 
             LOG_INFO("");
