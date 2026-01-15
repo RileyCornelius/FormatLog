@@ -83,7 +83,7 @@ public:
 
 #if LOG_STORAGE_ENABLE
     FormatLog(Stream *stream, fs::FS &fs, const char *filePath = LOG_STORAGE_FILE_PATH)
-        : serial(stream), storage(std::make_unique<Storage>(fs, filePath)) {}
+        : serial(stream), storage(new Storage(fs, filePath)) {}
 #endif
 
     static FormatLog &instance()
@@ -101,7 +101,7 @@ public:
     // Must be called before any logging to storage
     void setStorage(fs::FS &fs, const char *filePath = LOG_STORAGE_FILE_PATH)
     {
-        storage = std::make_unique<Storage>(fs, filePath);
+        storage.reset(new Storage(fs, filePath));
     }
 
     void setStorageLogLevel(LogLevel level)

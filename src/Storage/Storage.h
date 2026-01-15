@@ -26,9 +26,6 @@ private:
         if (fileOpen)
             return true;
 
-        if (!isMounted())
-            return false;
-
         file = fileSystem->open(filePath.c_str(), FILE_APPEND, true);
         if (!file)
             return false;
@@ -113,19 +110,12 @@ private:
     }
 
 public:
-    Storage() = default;
-
     Storage(fs::FS &fs, const char *path = LOG_STORAGE_FILE_PATH)
         : fileSystem(&fs), filePath(path) {}
 
     ~Storage()
     {
         close();
-    }
-
-    bool isMounted() const
-    {
-        return fileSystem != nullptr;
     }
 
     bool isFileOpen() const
