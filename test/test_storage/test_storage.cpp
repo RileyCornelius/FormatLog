@@ -1,4 +1,4 @@
-// Storage feature unit tests with SPIFFS
+// FileManager feature unit tests with SPIFFS
 // Tests buffering, rotation, and file management
 
 #include <Arduino.h>
@@ -412,7 +412,7 @@ void test_storage_file_naming_multiple_extensions()
     cleanupLogFiles(SPIFFS);
 
     // Multiple extensions: last extension should be preserved.
-    // Storage::rotate() splits on the last '.', so expected rotated name is: /log.txt.1.md
+    // FileManager::rotate() splits on the last '.', so expected rotated name is: /log.txt.1.md
     const char *path = "/log.txt.md";
     FmtLog.setStorage(SPIFFS, path);
 
@@ -495,7 +495,7 @@ void setup()
     delay(3000);
 
     Serial.begin(115200);
-    Serial.println("\n\n=== Storage Unit Tests ===");
+    Serial.println("\n\n=== FileManager Unit Tests ===");
 
     UNITY_BEGIN();
     tests();

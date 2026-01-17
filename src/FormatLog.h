@@ -6,7 +6,7 @@
 #include "FmtLib.h"
 
 #if LOG_STORAGE_ENABLE
-#include "Storage/Storage.h"
+#include "Storage/FileManager.h"
 #endif
 
 /**--------------------------------------------------------------------------------------
@@ -38,7 +38,7 @@ private:
     PanicHandler panicHandler = LOG_PANIC_HANDLER;
 
 #if LOG_STORAGE_ENABLE
-    std::unique_ptr<Storage> storage;
+    IFileManager *storage = nullptr;
     LogLevel storageLogLevel = static_cast<LogLevel>(LOG_STORAGE_LEVEL);
 
     bool shouldLogStorage(LogLevel level)
@@ -49,7 +49,7 @@ private:
 
     bool shouldLog(LogLevel level)
     {
-        return level >= logLevel;
+        return serial && level >= logLevel;
     }
 
     template <typename... Args>
@@ -82,8 +82,20 @@ public:
     FormatLog(Stream *stream = &Serial) : serial(stream) {}
 
 #if LOG_STORAGE_ENABLE
-    FormatLog(Stream *stream, fs::FS &fs, const char *filePath = LOG_STORAGE_FILE_PATH)
-        : serial(stream), storage(new Storage(fs, filePath)) {}
+    ~FormatLog()
+    {
+        clearStorage();
+    }
+
+    void clearStorage()
+    {
+        if (storage)
+        {
+            storage->close();
+            delete storage;
+            storage = nullptr;
+        }
+    }
 #endif
 
     static FormatLog &instance()
@@ -98,10 +110,12 @@ public:
     }
 
 #if LOG_STORAGE_ENABLE
-    // Must be called before any logging to storage
-    void setStorage(fs::FS &fs, const char *filePath = LOG_STORAGE_FILE_PATH)
+    // Automatically detects file type and mode from file system's open() signature
+    template <typename TFileSystem>
+    void setStorage(TFileSystem &fs, const char *filePath = LOG_STORAGE_FILE_PATH)
     {
-        storage.reset(new Storage(fs, filePath));
+        clearStorage();
+        storage = new FileManager(fs, filePath);
     }
 
     void setStorageLogLevel(LogLevel level)
@@ -342,25 +356,19 @@ public:
 #define LOG_SET_PANIC_HANDLER(handler)
 #endif
 
-/**--------------------------------------------------------------------------------------
- * Storage Macros
- *-------------------------------------------------------------------------------------*/
-
 #if LOG_STORAGE_ENABLE
-#define LOG_SET_STORAGE(fs) FormatLog::instance().setStorage(fs)
-#define LOG_SET_STORAGE_FILE_PATH(fs, filePath) FormatLog::instance().setStorage(fs, filePath)
+#define LOG_SET_STORAGE(fs, ...) FormatLog::instance().setStorage(fs, ##__VA_ARGS__)
 #define LOG_SET_STORAGE_LOG_LEVEL(level) FormatLog::instance().setStorageLogLevel(level)
 #define LOG_GET_STORAGE_LOG_LEVEL() FormatLog::instance().getStorageLogLevel()
 #define LOG_FLUSH_STORAGE() FormatLog::instance().flushStorage()
 #define LOG_CLOSE_STORAGE() FormatLog::instance().closeStorage()
 #else
-#define LOG_SET_STORAGE(fs)
-#define LOG_SET_STORAGE_FILE_PATH(fs, filePath)
+#define LOG_SET_STORAGE(fs, ...)
 #define LOG_SET_STORAGE_LOG_LEVEL(level)
 #define LOG_GET_STORAGE_LOG_LEVEL() LogLevel::DISABLE
 #define LOG_FLUSH_STORAGE()
 #define LOG_CLOSE_STORAGE()
-#endif
+#endif // LOG_STORAGE_ENABLE
 
 /**--------------------------------------------------------------------------------------
  * Global Logger Instance

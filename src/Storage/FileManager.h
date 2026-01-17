@@ -1,32 +1,96 @@
 #pragma once
 
-#include "FS.h"
-#include "Config/Settings.h"
 #include <string>
+#include <type_traits>
+#include "Config/Settings.h"
+#include "IFileManager.h"
 
 /**--------------------------------------------------------------------------------------
- * Storage Class - File system storage for log messages
+ * FileManager Class - File system storage for log messages
+ *
+ * Automatically detects file type and mode at compile time based on the
+ * file system's open() method signature.
+ *
+ * Template parameters:
+ *   TFileSystem - The file system type (e.g., fs::LittleFSFS, fs::SPIFFSFS, SDClass)
+ *   TFile - Auto-deduced from open() return type (optional override)
+ *
+ * Usage:
+ *   FileManager<fs::LittleFSFS> manager(LittleFS, "/log.txt");
+ *   FileManager<SDClass> manager(SD, "/log.txt");
+ *
+ * Works with:
+ *   - ESP32 LittleFS/SPIFFS (uses "a" string mode)
+ *   - SdFat and POSIX-style file systems (uses O_WRONLY | O_APPEND | O_CREAT)
+ *   - Raspberry Pi Pico FS (auto-detected)
  *-------------------------------------------------------------------------------------*/
 
-class Storage
+// SFINAE helpers to detect open() parameter types
+// Detects if file system uses POSIX-style integer modes (returns true for SdFat, etc.)
+template <typename TFS, typename = void>
+struct IsPosix : std::true_type
+{
+};
+
+// Specialization for file systems with string modes (ESP32, Arduino)
+template <typename TFS>
+struct IsPosix<TFS, decltype(void(std::declval<TFS>().open("", "")))> : std::false_type
+{
+};
+
+// Helper to deduce the File type returned by open()
+template <typename TFS>
+struct FileTypeDeducer
+{
+    // String mode first (Arduino, ESP32, Pico pattern)
+    template <typename T = TFS>
+    static decltype(std::declval<T>().open("", "")) deduceImpl(int);
+
+    // Integer mode (SdFat, POSIX pattern)
+    template <typename T = TFS>
+    static decltype(std::declval<T>().open("", 0)) deduceImpl(...);
+
+    using type = decltype(deduceImpl<TFS>(0));
+};
+
+/**--------------------------------------------------------------------------------------
+ * FileManager Class - File system storage for log messages
+ *-------------------------------------------------------------------------------------*/
+
+template <typename TFileSystem, typename TFile = typename FileTypeDeducer<TFileSystem>::type>
+class FileManager : public IFileManager
 {
 private:
-    fs::FS *fileSystem;
+    TFileSystem *fileSystem;
     std::string filePath;
 
-    File file;
+    TFile file;
     size_t currentMessageCount = 0;
     size_t currentBufferSize = 0;
     size_t currentFileSize = 0;
     bool fileOpen = false;
     bool justRotated = false;
 
+    template <typename TFS = TFileSystem>
+    typename std::enable_if<!IsPosix<TFS>::value, TFile>::type
+    openFileImpl(const char *path)
+    {
+        return fileSystem->open(path, "a");
+    }
+
+    template <typename TFS = TFileSystem>
+    typename std::enable_if<IsPosix<TFS>::value, TFile>::type
+    openFileImpl(const char *path)
+    {
+        return fileSystem->open(path, 1 | 0x0008 | 0x0200); // O_WRONLY | O_APPEND | O_CREAT
+    }
+
     bool openFile()
     {
         if (fileOpen)
             return true;
 
-        file = fileSystem->open(filePath.c_str(), FILE_APPEND, true);
+        file = openFileImpl(filePath.c_str());
         if (!file)
             return false;
 
@@ -110,25 +174,25 @@ private:
     }
 
 public:
-    Storage(fs::FS &fs, const char *path = LOG_STORAGE_FILE_PATH)
+    FileManager(TFileSystem &fs, const char *path)
         : fileSystem(&fs), filePath(path) {}
 
-    ~Storage()
+    ~FileManager() override
     {
         close();
     }
 
-    bool isFileOpen() const
+    bool isFileOpen() const override
     {
         return fileOpen;
     }
 
-    const char *getFilePath() const
+    const char *getFilePath() const override
     {
         return filePath.c_str();
     }
 
-    bool write(const uint8_t *data, size_t size)
+    bool write(const uint8_t *data, size_t size) override
     {
         // Stop writing if rotation disabled and file size limit reached
         if (LOG_STORAGE_MAX_FILES == 0 && currentFileSize >= LOG_STORAGE_MAX_FILE_SIZE)
@@ -162,7 +226,7 @@ public:
         return true;
     }
 
-    void flush()
+    void flush() override
     {
         if (!fileOpen || !file)
             return;
@@ -172,7 +236,7 @@ public:
         currentBufferSize = 0;
     }
 
-    void close()
+    void close() override
     {
         if (!fileOpen || !file)
             return;
