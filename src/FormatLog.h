@@ -6,7 +6,7 @@
 #include "FmtLib.h"
 
 #if LOG_STORAGE_ENABLE
-#include "Storage/FileManager.h"
+#include "Storage/RotatingFileSink.h"
 #endif
 
 /**--------------------------------------------------------------------------------------
@@ -38,7 +38,7 @@ private:
     PanicHandler panicHandler = LOG_PANIC_HANDLER;
 
 #if LOG_STORAGE_ENABLE
-    IFileManager *storage = nullptr;
+    std::shared_ptr<IRotatingFileSink> storage;
     LogLevel storageLogLevel = static_cast<LogLevel>(LOG_STORAGE_LEVEL);
 
     bool shouldLogStorage(LogLevel level)
@@ -73,7 +73,7 @@ private:
             fmt::format_to(fmt::appender(buffer), LOG_STORAGE_PREAMBLE_FORMAT, LOG_STORAGE_PREAMBLE_ARGS(level, loc.filename, loc.line, loc.funcname));
             fmt::vformat_to(fmt::appender(buffer), format, fmt::make_format_args(args...));
             buffer.append(fmt::string_view(LOG_EOL));
-            storage->write(reinterpret_cast<const uint8_t *>(buffer.data()), buffer.size());
+            storage->write(buffer.data(), buffer.size());
         }
 #endif
     }
@@ -89,12 +89,7 @@ public:
 
     void clearStorage()
     {
-        if (storage)
-        {
-            storage->close();
-            delete storage;
-            storage = nullptr;
-        }
+        storage.reset();
     }
 #endif
 
@@ -110,12 +105,10 @@ public:
     }
 
 #if LOG_STORAGE_ENABLE
-    // Automatically detects file type and mode from file system's open() signature
-    template <typename TFileSystem>
-    void setStorage(TFileSystem &fs, const char *filePath = LOG_STORAGE_FILE_PATH)
+    void setStorage(std::shared_ptr<IRotatingFileSink> sink)
     {
         clearStorage();
-        storage = new FileManager<TFileSystem>(fs, filePath);
+        storage = sink;
     }
 
     void setStorageLogLevel(LogLevel level)
@@ -132,12 +125,6 @@ public:
     {
         if (storage)
             storage->flush();
-    }
-
-    void closeStorage()
-    {
-        if (storage)
-            storage->close();
     }
 #endif
 
@@ -205,7 +192,7 @@ public:
         fmt::basic_memory_buffer<char, LOG_STATIC_BUFFER_SIZE> buffer;
         fmt::vformat_to(fmt::appender(buffer), format, fmt::make_format_args(args...));
         buffer.append(fmt::string_view(LOG_EOL));
-        storage->write(reinterpret_cast<const uint8_t *>(buffer.data()), buffer.size());
+        storage->write(buffer.data(), buffer.size());
     }
 #endif
 
@@ -357,17 +344,15 @@ public:
 #endif
 
 #if LOG_STORAGE_ENABLE
-#define LOG_SET_STORAGE(fs, ...) FormatLog::instance().setStorage(fs, ##__VA_ARGS__)
+#define LOG_SET_STORAGE(fs, ...) FormatLog::instance().setStorage(createStorage(fs, ##__VA_ARGS__))
 #define LOG_SET_STORAGE_LOG_LEVEL(level) FormatLog::instance().setStorageLogLevel(level)
 #define LOG_GET_STORAGE_LOG_LEVEL() FormatLog::instance().getStorageLogLevel()
 #define LOG_FLUSH_STORAGE() FormatLog::instance().flushStorage()
-#define LOG_CLOSE_STORAGE() FormatLog::instance().closeStorage()
 #else
 #define LOG_SET_STORAGE(fs, ...)
 #define LOG_SET_STORAGE_LOG_LEVEL(level)
 #define LOG_GET_STORAGE_LOG_LEVEL() LogLevel::DISABLE
 #define LOG_FLUSH_STORAGE()
-#define LOG_CLOSE_STORAGE()
 #endif // LOG_STORAGE_ENABLE
 
 /**--------------------------------------------------------------------------------------

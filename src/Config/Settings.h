@@ -83,10 +83,6 @@ inline void _logPanic()
 #define LOG_STORAGE_FILE_PATH "/log.txt"
 #endif
 
-#ifndef LOG_STORAGE_MAX_BUFFER_MESSAGES
-#define LOG_STORAGE_MAX_BUFFER_MESSAGES 32
-#endif
-
 #ifndef LOG_STORAGE_MAX_BUFFER_SIZE
 #define LOG_STORAGE_MAX_BUFFER_SIZE 4096
 #endif
@@ -97,6 +93,10 @@ inline void _logPanic()
 
 #ifndef LOG_STORAGE_MAX_FILES
 #define LOG_STORAGE_MAX_FILES 3 // Number of rotated log files to keep. Set to 0 to disable rotation (logging stops at MAX_FILE_SIZE)
+#endif
+
+#ifndef LOG_STORAGE_NEW_FILE_ON_BOOT
+#define LOG_STORAGE_NEW_FILE_ON_BOOT 0 // Rotate on first write to preserve old log file. Set to 1 to enable.
 #endif
 
 #ifndef LOG_STORAGE_PREAMBLE_FORMAT
@@ -132,14 +132,14 @@ static_assert(LOG_STORAGE_ENABLE == 0 || LOG_STORAGE_ENABLE == 1,
 #if LOG_STORAGE_ENABLE
 static_assert(LOG_STORAGE_LEVEL >= LOG_LEVEL_TRACE && LOG_STORAGE_LEVEL <= LOG_LEVEL_DISABLE,
               "LOG_STORAGE_LEVEL must be between LOG_LEVEL_TRACE and LOG_LEVEL_DISABLE");
-static_assert(LOG_STORAGE_MAX_BUFFER_MESSAGES > 0,
-              "LOG_STORAGE_MAX_BUFFER_MESSAGES must be greater than 0");
 static_assert(LOG_STORAGE_MAX_BUFFER_SIZE > 0,
               "LOG_STORAGE_MAX_BUFFER_SIZE must be greater than 0");
 static_assert(LOG_STORAGE_MAX_FILE_SIZE > 0,
               "LOG_STORAGE_MAX_FILE_SIZE must be greater than 0");
 static_assert(LOG_STORAGE_MAX_FILES >= 0,
               "LOG_STORAGE_MAX_FILES must be greater than or equal to 0");
+static_assert(LOG_STORAGE_NEW_FILE_ON_BOOT == 0 || LOG_STORAGE_NEW_FILE_ON_BOOT == 1,
+              "LOG_STORAGE_NEW_FILE_ON_BOOT must be either 0 or 1");
 #endif
 
 /**--------------------------------------------------------------------------------------

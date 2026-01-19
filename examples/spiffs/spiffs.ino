@@ -110,7 +110,7 @@ void setup()
     LOG_INFO("SPIFFS Total: {} bytes", SPIFFS.totalBytes());
     LOG_INFO("SPIFFS Used: {} bytes", SPIFFS.usedBytes());
     LOG_INFO("Storage level: WARN+");
-    LOG_INFO("Buffer: {} messages or {} bytes", LOG_STORAGE_MAX_BUFFER_MESSAGES, LOG_STORAGE_MAX_BUFFER_SIZE);
+    LOG_INFO("Buffer: {} bytes", LOG_STORAGE_MAX_BUFFER_SIZE);
     LOG_INFO("Max file size: {} bytes", LOG_STORAGE_MAX_FILE_SIZE);
     LOG_INFO("Max files: {}", LOG_STORAGE_MAX_FILES);
     LOG_INFO("===========================");
@@ -180,7 +180,7 @@ void loop()
             if (resetCount >= 5)
             {
                 LOG_INFO("=== FINAL TEST COMPLETE - 5 cycles finished ===");
-                FmtLog.closeStorage();
+                FmtLog.clearStorage();
             }
 
             LOG_INFO("");

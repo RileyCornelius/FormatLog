@@ -9,7 +9,7 @@ void setup()
     Serial.begin(115200);
     SPI.begin();
     SD.begin(PIN_SD_CS, SPI);
-    FmtLog.setStorage(SD);
+    LOG_SET_STORAGE(SD);
     delay(3000);
 
     LOG_INFO("SD initialized successfully");
