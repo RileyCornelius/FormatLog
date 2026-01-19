@@ -4,6 +4,7 @@
 #include <type_traits>
 #include "Config/Settings.h"
 #include "IFileManager.h"
+#include "FileManagerTraits.h"
 
 /**--------------------------------------------------------------------------------------
  * FileManager Class - File system storage for log messages
@@ -13,56 +14,33 @@
  *
  * Template parameters:
  *   TFileSystem - The file system type (e.g., fs::LittleFSFS, fs::SPIFFSFS, SDClass)
- *   TFile - Auto-deduced from open() return type (optional override)
+ *   TFile       - Auto-deduced from open() return type (optional override)
+ *   TAppendMode - Auto-deduced append mode type (optional override)
  *
  * Usage:
+ *   Auto-detected (recommended):
  *   FileManager<fs::LittleFSFS> manager(LittleFS, "/log.txt");
  *   FileManager<SDClass> manager(SD, "/log.txt");
  *
+ *   Custom mode for unsupported libraries:
+ *   FileManager<CustomFS, CustomFile, const char*> manager(myFS, "/log.txt", "a");
+ *
  * Works with:
  *   - ESP32 LittleFS/SPIFFS (uses "a" string mode)
- *   - SdFat and POSIX-style file systems (uses O_WRONLY | O_APPEND | O_CREAT)
- *   - Raspberry Pi Pico FS (auto-detected)
+ *   - SdFat file systems (uses O_WRONLY | O_APPEND | O_CREAT)
+ *   - Raspberry Pi Pico FS (uses "a" string mode)
+ *   - Arduino SD library (uses FILE_WRITE uint8_t mode)
  *-------------------------------------------------------------------------------------*/
 
-// SFINAE helpers to detect open() parameter types
-// Detects if file system uses POSIX-style integer modes (returns true for SdFat, etc.)
-template <typename TFS, typename = void>
-struct IsPosix : std::true_type
-{
-};
-
-// Specialization for file systems with string modes (ESP32, Arduino)
-template <typename TFS>
-struct IsPosix<TFS, decltype(void(std::declval<TFS>().open("", "")))> : std::false_type
-{
-};
-
-// Helper to deduce the File type returned by open()
-template <typename TFS>
-struct FileTypeDeducer
-{
-    // String mode first (Arduino, ESP32, Pico pattern)
-    template <typename T = TFS>
-    static decltype(std::declval<T>().open("", "")) deduceImpl(int);
-
-    // Integer mode (SdFat, POSIX pattern)
-    template <typename T = TFS>
-    static decltype(std::declval<T>().open("", 0)) deduceImpl(...);
-
-    using type = decltype(deduceImpl<TFS>(0));
-};
-
-/**--------------------------------------------------------------------------------------
- * FileManager Class - File system storage for log messages
- *-------------------------------------------------------------------------------------*/
-
-template <typename TFileSystem, typename TFile = typename FileTypeDeducer<TFileSystem>::type>
+template <typename TFileSystem,
+          typename TFile = typename FileTypeDeducer<TFileSystem>::type,
+          typename TAppendMode = typename AppendModeDeducer<TFileSystem>::type>
 class FileManager : public IFileManager
 {
 private:
     TFileSystem *fileSystem;
     std::string filePath;
+    TAppendMode appendMode;
 
     TFile file;
     size_t currentMessageCount = 0;
@@ -71,26 +49,12 @@ private:
     bool fileOpen = false;
     bool justRotated = false;
 
-    template <typename TFS = TFileSystem>
-    typename std::enable_if<!IsPosix<TFS>::value, TFile>::type
-    openFileImpl(const char *path)
-    {
-        return fileSystem->open(path, "a");
-    }
-
-    template <typename TFS = TFileSystem>
-    typename std::enable_if<IsPosix<TFS>::value, TFile>::type
-    openFileImpl(const char *path)
-    {
-        return fileSystem->open(path, 1 | 0x0008 | 0x0200); // O_WRONLY | O_APPEND | O_CREAT
-    }
-
     bool openFile()
     {
         if (fileOpen)
             return true;
 
-        file = openFileImpl(filePath.c_str());
+        file = fileSystem->open(filePath.c_str(), appendMode);
         if (!file)
             return false;
 
@@ -174,8 +138,9 @@ private:
     }
 
 public:
-    FileManager(TFileSystem &fs, const char *path)
-        : fileSystem(&fs), filePath(path) {}
+    FileManager(TFileSystem &fs, const char *path,
+                TAppendMode mode = AppendModeDeducer<TFileSystem>::defaultValue())
+        : fileSystem(&fs), filePath(path), appendMode(mode) {}
 
     ~FileManager() override
     {

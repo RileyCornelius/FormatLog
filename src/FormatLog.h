@@ -115,7 +115,7 @@ public:
     void setStorage(TFileSystem &fs, const char *filePath = LOG_STORAGE_FILE_PATH)
     {
         clearStorage();
-        storage = new FileManager(fs, filePath);
+        storage = new FileManager<TFileSystem>(fs, filePath);
     }
 
     void setStorageLogLevel(LogLevel level)

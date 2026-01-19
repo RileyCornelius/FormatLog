@@ -1,6 +1,3 @@
-// FileManager feature unit tests with SPIFFS
-// Tests buffering, rotation, and file management
-
 #include <Arduino.h>
 #include <SPIFFS.h>
 #include <string>
