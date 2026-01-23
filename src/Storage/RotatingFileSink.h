@@ -2,7 +2,7 @@
 
 #include <string>
 #include <memory>
-#include <fmt/format.h>
+#include <fmt.h>
 #include "Config/Settings.h"
 #include "IRotatingFileSink.h"
 #include "FileManager.h"
@@ -10,81 +10,57 @@
 class RotatingFileSink : public IRotatingFileSink
 {
 private:
-    using Buffer = fmt::basic_memory_buffer<uint8_t, LOG_STORAGE_MAX_BUFFER_SIZE>;
-
-    struct ParsedPath
-    {
-        std::string name;
-        std::string ext;
-    };
-
+    fmt::basic_memory_buffer<uint8_t, LOG_STORAGE_MAX_BUFFER_SIZE> _buffer;
     std::shared_ptr<IFileManager> _fileManager;
     std::string _filePath;
-    Buffer _buffer;
+    std::string _baseName;
+    std::string _extension;
     size_t _maxFiles;
     size_t _maxFileSize;
     size_t _currentSize;
-    bool _rotateOnOpen;
+    bool _rotateOnInit;
     bool _initialized;
 
-    ParsedPath parseFilePath() const
+    void parseFilePath()
     {
-        ParsedPath result;
-
-        // Find last occurrence of '.' and '/'
         size_t dotPos = _filePath.find_last_of('.');
-        size_t slashPos = _filePath.find_last_of('/');
+        size_t slashPos = _filePath.find_last_of("/\\");
 
-        // Ensure dot is after last slash (not in directory name)
-        if (dotPos != std::string::npos &&
-            (slashPos == std::string::npos || dotPos > slashPos))
-        {
-            result.name = _filePath.substr(0, dotPos);
-            result.ext = _filePath.substr(dotPos); // includes the '.'
-        }
-        else // No extension
-        {
-            result.name = _filePath;
-            result.ext = "";
-        }
-
-        return result;
+        bool hasExt = dotPos != std::string::npos && (slashPos == std::string::npos || dotPos > slashPos);
+        _baseName = hasExt ? _filePath.substr(0, dotPos) : _filePath;
+        _extension = hasExt ? _filePath.substr(dotPos) : "";
     }
 
-    std::string calcFilename(const ParsedPath &parsed, size_t index) const
+    std::string createFilePath(size_t index) const
     {
         if (index == 0)
         {
             return _filePath;
         }
-
-        char indexStr[12];
-        snprintf(indexStr, sizeof(indexStr), "%zu", index);
-
-        // Format: {basename}.{index}{extension}
-        return parsed.name + "." + indexStr + parsed.ext;
+        return fmt::format("{}.{}{}", _baseName, index, _extension); // Example: log.1.txt
     }
 
-    bool shouldFlush() const
+    bool shouldFlush(size_t incomingSize) const
     {
-        return _buffer.size() >= LOG_STORAGE_MAX_BUFFER_SIZE;
+        return _buffer.size() + incomingSize > LOG_STORAGE_MAX_BUFFER_SIZE;
     }
 
-    void initializeFile()
+    void initFile()
     {
         if (_initialized)
             return;
 
+        // Get the existing file size or rotate it
         if (_fileManager->exists(_filePath.c_str()))
         {
-            if (_rotateOnOpen)
+            if (_rotateOnInit)
             {
                 rotate();
                 _currentSize = 0;
             }
             else if (_fileManager->open(_filePath.c_str()))
             {
-                _currentSize = _fileManager->size(); // Single size() call
+                _currentSize = _fileManager->size();
                 _fileManager->close();
             }
         }
@@ -93,16 +69,20 @@ private:
     }
 
 public:
-    RotatingFileSink(std::shared_ptr<IFileManager> fileManager, const char *path, bool newFileOnBoot = LOG_STORAGE_NEW_FILE_ON_BOOT)
+    RotatingFileSink(std::shared_ptr<IFileManager> fileManager,
+                     const char *path = LOG_STORAGE_FILE_PATH,
+                     size_t maxFiles = LOG_STORAGE_MAX_FILES,
+                     size_t maxFileSize = LOG_STORAGE_MAX_FILE_SIZE,
+                     bool rotateOnInit = LOG_STORAGE_NEW_FILE_ON_BOOT)
         : _fileManager(fileManager),
           _filePath(path),
-          _maxFiles(LOG_STORAGE_MAX_FILES),
-          _maxFileSize(LOG_STORAGE_MAX_FILE_SIZE),
+          _maxFiles(maxFiles),
+          _maxFileSize(maxFileSize),
           _currentSize(0),
-          _rotateOnOpen(newFileOnBoot),
+          _rotateOnInit(rotateOnInit),
           _initialized(false)
     {
-        // No fileManager calls - defer to first flush
+        parseFilePath();
     }
 
     ~RotatingFileSink() override
@@ -117,26 +97,25 @@ public:
             return false;
         }
 
-        _buffer.append(data, data + size);
-
-        if (shouldFlush())
+        if (shouldFlush(size))
         {
             flush();
         }
 
+        if (size > LOG_STORAGE_MAX_BUFFER_SIZE)
+        {
+            return writeToFile(data, size);
+        }
+
+        _buffer.append(data, data + size);
         return true;
     }
 
-    void flush() override
+    bool writeToFile(const char *data, size_t size)
     {
-        if (_buffer.size() == 0)
-            return;
+        initFile();
 
-        initializeFile();
-
-        // Check rotation based on tracked size only
-        size_t newSize = _currentSize + _buffer.size();
-        if (newSize > _maxFileSize && _currentSize > 0)
+        if (_currentSize > 0 && _currentSize + size > _maxFileSize)
         {
             rotate();
             _currentSize = 0;
@@ -144,14 +123,22 @@ public:
 
         if (!_fileManager->open(_filePath.c_str()))
         {
-            return;
+            return false;
         }
 
-        size_t written = _fileManager->write(reinterpret_cast<const char *>(_buffer.data()), _buffer.size());
-        _currentSize += written;
-
-        _fileManager->flush();
+        size_t written = _fileManager->write(data, size);
         _fileManager->close();
+
+        _currentSize += written;
+        return written == size;
+    }
+
+    void flush() override
+    {
+        if (_buffer.size() == 0)
+            return;
+
+        writeToFile(reinterpret_cast<const char *>(_buffer.data()), _buffer.size());
         _buffer.clear();
     }
 
@@ -164,22 +151,21 @@ public:
             return;
         }
 
-        // Delete oldest file (index = maxFiles)
-        ParsedPath parsed = parseFilePath();
-        std::string oldestFile = calcFilename(parsed, _maxFiles);
+        // Delete oldest file
+        std::string oldestFile = createFilePath(_maxFiles);
         _fileManager->remove(oldestFile.c_str());
 
         // Rename files backwards
         for (size_t i = _maxFiles; i > 0; --i)
         {
-            std::string src = calcFilename(parsed, i - 1);
+            std::string src = createFilePath(i - 1);
 
             if (!_fileManager->exists(src.c_str()))
             {
                 continue;
             }
 
-            std::string target = calcFilename(parsed, i);
+            std::string target = createFilePath(i);
 
             _fileManager->remove(target.c_str());
             _fileManager->rename(src.c_str(), target.c_str());
@@ -205,19 +191,39 @@ public:
     {
         return _maxFileSize;
     }
+
+    void setFilePath(const char *path)
+    {
+        _filePath = path;
+        _initialized = false;
+        _currentSize = 0;
+        _buffer.clear();
+        parseFilePath();
+    }
+
+    std::string getFilePath() const
+    {
+        return _filePath;
+    }
 };
 
 /**
  * Factory function to create a RotatingFileSink with FileManager
  * @param fs Reference to the file system (SPIFFS, LittleFS, SD, SdFat)
  * @param filePath Path to the log file
- * @param newFileOnBoot Whether to create a new log file on boot (rotating the old one)
+ * @param maxFiles Maximum number of rotated files to keep eg. 3 keeps .1, .2, .3 + main file
+ * @param maxFileSize Maximum size of each log file before rotation
+ * @param rotateOnInit Whether to rotate the existing log file on initialization
  * @return Shared pointer to RotatingFileSink
  */
 template <typename TFileSystem>
-std::shared_ptr<IRotatingFileSink> createStorage(TFileSystem &fs, const char *filePath = LOG_STORAGE_FILE_PATH, bool newFileOnBoot = LOG_STORAGE_NEW_FILE_ON_BOOT)
+std::shared_ptr<IRotatingFileSink> createStorage(TFileSystem &fs,
+                                                 const char *filePath = LOG_STORAGE_FILE_PATH,
+                                                 size_t maxFiles = LOG_STORAGE_MAX_FILES,
+                                                 size_t maxFileSize = LOG_STORAGE_MAX_FILE_SIZE,
+                                                 bool rotateOnInit = LOG_STORAGE_NEW_FILE_ON_BOOT)
 {
     auto fileManager = std::make_shared<FileManager<TFileSystem>>(fs);
-    auto fileSink = std::make_shared<RotatingFileSink>(fileManager, filePath, newFileOnBoot);
+    auto fileSink = std::make_shared<RotatingFileSink>(fileManager, filePath, maxFiles, maxFileSize, rotateOnInit);
     return fileSink;
 }
