@@ -22,6 +22,7 @@
     "export": {
         "exclude": [
             "test",
+            "scripts",
             "platformio.ini",
             ".gitignore",
             ".github"
