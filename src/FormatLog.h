@@ -208,6 +208,11 @@ public:
         buffer.append(fmt::string_view(LOG_EOL));
         serial->write(reinterpret_cast<const uint8_t *>(buffer.data()), buffer.size());
 
+        flush();
+#if LOG_STORAGE_ENABLE
+        flushStorage();
+#endif
+
         if (panicHandler != nullptr)
             panicHandler();
     }
