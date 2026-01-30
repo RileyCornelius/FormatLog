@@ -113,8 +113,8 @@ inline void _logPanic()
  * Static Assertions for Settings Validation
  *-------------------------------------------------------------------------------------*/
 
-static_assert(LOG_LEVEL >= LOG_LEVEL_TRACE && LOG_LEVEL <= LOG_LEVEL_DISABLE,
-              "LOG_LEVEL must be between LOG_LEVEL_TRACE and LOG_LEVEL_DISABLE");
+static_assert(LOG_LEVEL >= LOG_LEVEL_DISABLE && LOG_LEVEL <= LOG_LEVEL_TRACE,
+              "LOG_LEVEL must be between LOG_LEVEL_DISABLE and LOG_LEVEL_TRACE");
 static_assert(LOG_LEVEL_TEXT_FORMAT >= LOG_LEVEL_TEXT_FORMAT_LETTER && LOG_LEVEL_TEXT_FORMAT <= LOG_LEVEL_TEXT_FORMAT_FULL,
               "LOG_LEVEL_TEXT_FORMAT must be either LOG_LEVEL_TEXT_FORMAT_LETTER, LOG_LEVEL_TEXT_FORMAT_SHORT or LOG_LEVEL_TEXT_FORMAT_FULL");
 static_assert(LOG_TIME >= LOG_TIME_DISABLE && LOG_TIME <= LOG_TIME_LOCALTIME,
@@ -130,8 +130,8 @@ static_assert(LOG_STORAGE_ENABLE == 0 || LOG_STORAGE_ENABLE == 1,
               "LOG_STORAGE_ENABLE must be either 0 or 1");
 
 #if LOG_STORAGE_ENABLE
-static_assert(LOG_STORAGE_LEVEL >= LOG_LEVEL_TRACE && LOG_STORAGE_LEVEL <= LOG_LEVEL_DISABLE,
-              "LOG_STORAGE_LEVEL must be between LOG_LEVEL_TRACE and LOG_LEVEL_DISABLE");
+static_assert(LOG_STORAGE_LEVEL >= LOG_LEVEL_DISABLE && LOG_STORAGE_LEVEL <= LOG_LEVEL_TRACE,
+              "LOG_STORAGE_LEVEL must be between LOG_LEVEL_DISABLE and LOG_LEVEL_TRACE");
 static_assert(LOG_STORAGE_MAX_BUFFER_SIZE > 0,
               "LOG_STORAGE_MAX_BUFFER_SIZE must be greater than 0");
 static_assert(LOG_STORAGE_MAX_FILE_SIZE > 0,

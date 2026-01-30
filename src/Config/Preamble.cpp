@@ -6,10 +6,10 @@ namespace preamble
 {
     const char *logLevelText(LogLevel level, LogLevelTextFormat format)
     {
-        static const char *logLevelTexts[3][5] = {
-            {"T", "D", "I", "W", "E"},                  // LogLevelTextFormat::LETTER
-            {"TRAC", "DBUG", "INFO", "WARN", "EROR"},   // LogLevelTextFormat::SHORT
-            {"TRACE", "DEBUG", "INFO", "WARN", "ERROR"} // LogLevelTextFormat::FULL
+        static const char *logLevelTexts[3][6] = {
+            {"", "E", "W", "I", "D", "T"},                      // LogLevelTextFormat::LETTER
+            {"", "EROR", "WARN", "INFO", "DBUG", "TRAC"},       // LogLevelTextFormat::SHORT
+            {"", "ERROR", "WARN", "INFO", "DEBUG", "TRACE"}     // LogLevelTextFormat::FULL
         };
 
         return logLevelTexts[(static_cast<int>(format))][static_cast<int>(level)];
@@ -122,12 +122,12 @@ namespace preamble
     const char *colorText(LogLevel level)
     {
         static const char *colors[] = {
-            COLOR_TRACE, // White
-            COLOR_DEBUG, // Green
-            COLOR_INFO,  // Cyan
-            COLOR_WARN,  // Yellow
+            COLOR_RESET, // Disable - Reset color
             COLOR_ERROR, // Red
-            COLOR_RESET  // Reset color
+            COLOR_WARN,  // Yellow
+            COLOR_INFO,  // Cyan
+            COLOR_DEBUG, // Green
+            COLOR_TRACE  // White
         };
 
         return colors[static_cast<int>(level)];

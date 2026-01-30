@@ -6,7 +6,9 @@
 #include "FmtLib.h"
 
 #if LOG_STORAGE_ENABLE
+#include "Storage/IFileSink.h"
 #include "Storage/RotatingFileSink.h"
+#include "Storage/DirectFileSink.h"
 #endif
 
 /**--------------------------------------------------------------------------------------
@@ -38,18 +40,18 @@ private:
     PanicHandler panicHandler = LOG_PANIC_HANDLER;
 
 #if LOG_STORAGE_ENABLE
-    std::shared_ptr<IRotatingFileSink> storage;
+    std::shared_ptr<IFileSink> storage;
     LogLevel storageLogLevel = static_cast<LogLevel>(LOG_STORAGE_LEVEL);
 
     bool shouldLogStorage(LogLevel level)
     {
-        return storage && level >= storageLogLevel;
+        return storage && level <= storageLogLevel;
     }
 #endif
 
     bool shouldLog(LogLevel level)
     {
-        return serial && level >= logLevel;
+        return serial && level <= logLevel;
     }
 
     template <typename... Args>
@@ -84,11 +86,6 @@ public:
 #if LOG_STORAGE_ENABLE
     ~FormatLog()
     {
-        clearStorage();
-    }
-
-    void clearStorage()
-    {
         storage.reset();
     }
 #endif
@@ -105,9 +102,9 @@ public:
     }
 
 #if LOG_STORAGE_ENABLE
-    void setStorage(std::shared_ptr<IRotatingFileSink> sink)
+    void setStorage(std::shared_ptr<IFileSink> sink)
     {
-        clearStorage();
+        storage.reset();
         storage = sink;
     }
 
@@ -125,6 +122,19 @@ public:
     {
         if (storage)
             storage->flush();
+    }
+
+    void setStorageFilePath(const char *path)
+    {
+        if (storage)
+            storage->setFilePath(path);
+    }
+
+    std::string getStorageFilePath() const
+    {
+        if (storage)
+            return storage->getFilePath();
+        return "";
     }
 #endif
 
@@ -282,31 +292,31 @@ public:
  * Logger Log Macros
  *-------------------------------------------------------------------------------------*/
 
-#if LOG_LEVEL <= LOG_LEVEL_TRACE || (LOG_STORAGE_ENABLE && LOG_STORAGE_LEVEL <= LOG_LEVEL_TRACE)
+#if LOG_LEVEL >= LOG_LEVEL_TRACE || (LOG_STORAGE_ENABLE && LOG_STORAGE_LEVEL >= LOG_LEVEL_TRACE)
 #define LOG_TRACE(format, ...) FormatLog::instance().trace(SourceLocation(__FILE__, __LINE__, __FUNCTION__), format, ##__VA_ARGS__)
 #else
 #define LOG_TRACE(format, ...)
 #endif
 
-#if LOG_LEVEL <= LOG_LEVEL_DEBUG || (LOG_STORAGE_ENABLE && LOG_STORAGE_LEVEL <= LOG_LEVEL_DEBUG)
+#if LOG_LEVEL >= LOG_LEVEL_DEBUG || (LOG_STORAGE_ENABLE && LOG_STORAGE_LEVEL >= LOG_LEVEL_DEBUG)
 #define LOG_DEBUG(format, ...) FormatLog::instance().debug(SourceLocation(__FILE__, __LINE__, __FUNCTION__), format, ##__VA_ARGS__)
 #else
 #define LOG_DEBUG(format, ...)
 #endif
 
-#if LOG_LEVEL <= LOG_LEVEL_INFO || (LOG_STORAGE_ENABLE && LOG_STORAGE_LEVEL <= LOG_LEVEL_INFO)
+#if LOG_LEVEL >= LOG_LEVEL_INFO || (LOG_STORAGE_ENABLE && LOG_STORAGE_LEVEL >= LOG_LEVEL_INFO)
 #define LOG_INFO(format, ...) FormatLog::instance().info(SourceLocation(__FILE__, __LINE__, __FUNCTION__), format, ##__VA_ARGS__)
 #else
 #define LOG_INFO(format, ...)
 #endif
 
-#if LOG_LEVEL <= LOG_LEVEL_WARN || (LOG_STORAGE_ENABLE && LOG_STORAGE_LEVEL <= LOG_LEVEL_WARN)
+#if LOG_LEVEL >= LOG_LEVEL_WARN || (LOG_STORAGE_ENABLE && LOG_STORAGE_LEVEL >= LOG_LEVEL_WARN)
 #define LOG_WARN(format, ...) FormatLog::instance().warn(SourceLocation(__FILE__, __LINE__, __FUNCTION__), format, ##__VA_ARGS__)
 #else
 #define LOG_WARN(format, ...)
 #endif
 
-#if LOG_LEVEL <= LOG_LEVEL_ERROR || (LOG_STORAGE_ENABLE && LOG_STORAGE_LEVEL <= LOG_LEVEL_ERROR)
+#if LOG_LEVEL >= LOG_LEVEL_ERROR || (LOG_STORAGE_ENABLE && LOG_STORAGE_LEVEL >= LOG_LEVEL_ERROR)
 #define LOG_ERROR(format, ...) FormatLog::instance().error(SourceLocation(__FILE__, __LINE__, __FUNCTION__), format, ##__VA_ARGS__)
 #else
 #define LOG_ERROR(format, ...)
@@ -339,25 +349,40 @@ public:
  *-------------------------------------------------------------------------------------*/
 
 #if LOG_ASSERT_ENABLE
-#define ASSERT(condition) FormatLog::instance().assertion(!!(condition), __FILE__, __LINE__, __FUNCTION__, #condition)
-#define ASSERT_M(condition, msg) FormatLog::instance().assertion(!!(condition), __FILE__, __LINE__, __FUNCTION__, #condition, msg)
+#define ASSERT(condition, ...) FormatLog::instance().assertion(!!(condition), __FILE__, __LINE__, __FUNCTION__, #condition, ##__VA_ARGS__)
 #define LOG_SET_PANIC_HANDLER(handler) FormatLog::instance().setPanicHandler(handler)
 #else
 #define ASSERT(condition)
-#define ASSERT_M(condition, msg)
 #define LOG_SET_PANIC_HANDLER(handler)
 #endif
 
 #if LOG_STORAGE_ENABLE
-#define LOG_SET_STORAGE(fs, ...) FormatLog::instance().setStorage(createStorage(fs, ##__VA_ARGS__))
+/**
+ * @param fs Reference to the file system (SPIFFS, LittleFS, SD, SdFat)
+ * @param filePath Path to the log file
+ * @param alwaysFlush Whether to flush after every write
+ */
+#define LOG_SET_STORAGE(fs, ...) FormatLog::instance().setStorage(createDirectFileSink(fs, ##__VA_ARGS__))
+/**
+ * @param fs Reference to the file system (SPIFFS, LittleFS, SD, SdFat)
+ * @param filePath Path to the log file
+ * @param maxFiles Maximum number of rotated files to keep (eg. "3" keeps .1, .2, .3, main file)
+ * @param maxFileSize Maximum size of each log file before rotation
+ * @param rotateOnInit Whether to rotate the existing log file on initialization
+ */
+#define LOG_SET_STORAGE_ROTATING(fs, ...) FormatLog::instance().setStorage(createRotatingFileSink(fs, ##__VA_ARGS__))
 #define LOG_SET_STORAGE_LOG_LEVEL(level) FormatLog::instance().setStorageLogLevel(level)
 #define LOG_GET_STORAGE_LOG_LEVEL() FormatLog::instance().getStorageLogLevel()
 #define LOG_FLUSH_STORAGE() FormatLog::instance().flushStorage()
+#define LOG_SET_STORAGE_FILE_PATH(path) FormatLog::instance().setStorageFilePath(path)
+#define LOG_GET_STORAGE_FILE_PATH() FormatLog::instance().getStorageFilePath()
 #else
 #define LOG_SET_STORAGE(fs, ...)
 #define LOG_SET_STORAGE_LOG_LEVEL(level)
 #define LOG_GET_STORAGE_LOG_LEVEL() LogLevel::DISABLE
 #define LOG_FLUSH_STORAGE()
+#define LOG_SET_STORAGE_FILE_PATH(path)
+#define LOG_GET_STORAGE_FILE_PATH() std::string("")
 #endif // LOG_STORAGE_ENABLE
 
 /**--------------------------------------------------------------------------------------
