@@ -5,12 +5,11 @@
 #include <fmt.h>
 #include "Config/Settings.h"
 #include "IFileSink.h"
-#include "FileManager.h"
+#include "IFileManager.h"
 
 class RotatingFileSink : public IFileSink
 {
 private:
-    fmt::basic_memory_buffer<char, LOG_STORAGE_MAX_BUFFER_SIZE> _buffer;
     std::shared_ptr<IFileManager> _fileManager;
     std::string _filePath;
     std::string _baseName;
@@ -93,48 +92,26 @@ public:
 
     void close() override
     {
-        flush();
         _fileManager->close();
     }
 
     void flush() override
     {
-        if (_buffer.size() == 0)
-            return;
-
-        writeToFile(_buffer.data(), _buffer.size());
-        _buffer.clear();
+        _fileManager->flush();
     }
 
     bool write(const char *data, size_t size) override
     {
         if (!data || size == 0)
-        {
             return false;
-        }
 
-        if (_buffer.size() + size > LOG_STORAGE_MAX_BUFFER_SIZE)
-        {
-            flush();
-        }
-
-        _buffer.append(data, data + size);
-        return true;
-    }
-
-    bool writeToFile(const char *data, size_t size)
-    {
         initFile();
 
         if (_currentSize > 0 && _currentSize + size > _maxFileSize)
-        {
             rotate();
-        }
 
         if (!ensureOpen())
-        {
             return false;
-        }
 
         size_t written = _fileManager->write(data, size);
         _fileManager->flush();
@@ -150,6 +127,7 @@ public:
         if (_maxFiles == 0)
         {
             _fileManager->remove(_filePath.c_str());
+            _currentSize = 0;
             return;
         }
 
@@ -180,7 +158,6 @@ public:
         _filePath = path;
         _initialized = false;
         _currentSize = 0;
-        _buffer.clear();
         parseFilePath();
     }
 
@@ -189,24 +166,3 @@ public:
         return _filePath;
     }
 };
-
-/**
- * Factory function to create a RotatingFileSink with FileManager
- * @param fs Reference to the file system (SPIFFS, LittleFS, SD, SdFat)
- * @param filePath Path to the log file
- * @param maxFiles Maximum number of rotated files to keep (eg. "3" keeps .1, .2, .3, main file)
- * @param maxFileSize Maximum size of each log file before rotation
- * @param rotateOnInit Whether to rotate the existing log file on initialization
- * @return Shared pointer to RotatingFileSink
- */
-template <typename TFileSystem>
-std::shared_ptr<IFileSink> createRotatingFileSink(TFileSystem &fs,
-                                                  const char *filePath = LOG_STORAGE_FILE_PATH,
-                                                  size_t maxFiles = LOG_STORAGE_MAX_FILES,
-                                                  size_t maxFileSize = LOG_STORAGE_MAX_FILE_SIZE,
-                                                  bool rotateOnInit = LOG_STORAGE_NEW_FILE_ON_BOOT)
-{
-    auto fileManager = std::make_shared<FileManager<TFileSystem>>(fs);
-    auto fileSink = std::make_shared<RotatingFileSink>(fileManager, filePath, maxFiles, maxFileSize, rotateOnInit);
-    return fileSink;
-}
