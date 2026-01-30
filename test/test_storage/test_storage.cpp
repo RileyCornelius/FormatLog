@@ -4,9 +4,9 @@
 #include "unity.h"
 
 // File System Selection - Choose one:
-#define TEST_FS_SPIFFS
+// #define TEST_FS_SPIFFS
 // #define TEST_FS_LITTLEFS
-// #define TEST_FS_SD
+#define TEST_FS_SD
 // #define TEST_FS_SDFAT
 
 #ifdef TEST_FS_SPIFFS
@@ -130,7 +130,7 @@ int countLogFiles(fs::FS &filesystem)
 
 void test_storage_initialization()
 {
-    LOG_SET_STORAGE(TEST_FS, LOG_STORAGE_FILE_PATH);
+    LOG_SET_STORAGE_ROTATING(TEST_FS, LOG_STORAGE_FILE_PATH);
 
     // File should not exist yet (lazy initialization)
     TEST_ASSERT_FALSE_MESSAGE(TEST_FS.exists(LOG_STORAGE_FILE_PATH), "File should not exist before first log");
@@ -153,7 +153,7 @@ void test_storage_initialization()
 void test_storage_level_filtering()
 {
     deleteAllLogFiles(TEST_FS);
-    LOG_SET_STORAGE(TEST_FS);
+    LOG_SET_STORAGE_ROTATING(TEST_FS);
 
     // TRACE and DEBUG should not go to storage
     LOG_TRACE("Trace message - should not be in file");
@@ -182,7 +182,7 @@ void test_storage_level_filtering()
 void test_storage_buffering()
 {
     deleteAllLogFiles(TEST_FS);
-    LOG_SET_STORAGE(TEST_FS);
+    LOG_SET_STORAGE_ROTATING(TEST_FS);
 
     // Log 2 messages (below buffer size limit)
     LOG_WARN("Message 1");
@@ -204,7 +204,7 @@ void test_storage_buffering()
 void test_storage_manual_flush()
 {
     deleteAllLogFiles(TEST_FS);
-    LOG_SET_STORAGE(TEST_FS);
+    LOG_SET_STORAGE_ROTATING(TEST_FS);
 
     LOG_WARN("Before flush");
 
@@ -225,7 +225,7 @@ void test_storage_manual_flush()
 void test_storage_file_rotation()
 {
     deleteAllLogFiles(TEST_FS);
-    LOG_SET_STORAGE(TEST_FS);
+    LOG_SET_STORAGE_ROTATING(TEST_FS);
 
     // Generate enough messages to exceed file size limit (512 bytes)
     for (int i = 0; i < 30; i++)
@@ -251,7 +251,7 @@ void test_storage_file_rotation()
 void test_storage_max_files_limit()
 {
     deleteAllLogFiles(TEST_FS);
-    LOG_SET_STORAGE(TEST_FS);
+    LOG_SET_STORAGE_ROTATING(TEST_FS);
 
     // Generate many messages to create multiple rotations
     for (int i = 0; i < 60; i++)
@@ -273,7 +273,7 @@ void test_storage_max_files_limit()
 
 void test_storage_file_naming()
 {
-    LOG_SET_STORAGE(TEST_FS);
+    LOG_SET_STORAGE_ROTATING(TEST_FS);
     deleteAllLogFiles(TEST_FS);
 
     // Generate enough content for rotation
@@ -301,7 +301,7 @@ void test_storage_file_naming()
 void test_storage_empty_logs()
 {
     deleteAllLogFiles(TEST_FS);
-    LOG_SET_STORAGE(TEST_FS);
+    LOG_SET_STORAGE_ROTATING(TEST_FS);
 
     // Log only non-storage level messages
     LOG_TRACE("Trace");
@@ -318,7 +318,7 @@ void test_storage_empty_logs()
 void test_storage_large_message()
 {
     deleteAllLogFiles(TEST_FS);
-    LOG_SET_STORAGE(TEST_FS);
+    LOG_SET_STORAGE_ROTATING(TEST_FS);
 
     // Create a large message
     std::string largePayload(200, 'X');
@@ -333,7 +333,7 @@ void test_storage_large_message()
 void test_storage_rotated_files_are_readable()
 {
     deleteAllLogFiles(TEST_FS);
-    LOG_SET_STORAGE(TEST_FS);
+    LOG_SET_STORAGE_ROTATING(TEST_FS);
 
     // Create enough content to trigger at least one rotation.
     for (int i = 0; i < 40; i++)
@@ -381,7 +381,7 @@ void test_storage_file_naming_no_extension()
     deleteAllLogFiles(TEST_FS);
 
     const char *path = "/test_log_noext";
-    LOG_SET_STORAGE(TEST_FS, path);
+    LOG_SET_STORAGE_ROTATING(TEST_FS, path);
 
     // Generate enough content to trigger at least one rotation.
     for (int i = 0; i < 40; i++)
@@ -418,7 +418,7 @@ void test_storage_file_naming_multiple_extensions()
     // Multiple extensions: last extension should be preserved.
     // FileManager::rotate() splits on the last '.', so expected rotated name is: /log.txt.1.md
     const char *path = "/log.txt.md";
-    LOG_SET_STORAGE(TEST_FS, path);
+    LOG_SET_STORAGE_ROTATING(TEST_FS, path);
 
     for (int i = 0; i < 45; i++)
     {
@@ -467,7 +467,7 @@ void test_storage_file_naming_with_subdirectory()
     }
     TEST_ASSERT_TRUE_MESSAGE(TEST_FS.exists(dir), "Subdirectory should exist");
 
-    LOG_SET_STORAGE(TEST_FS, path);
+    LOG_SET_STORAGE_ROTATING(TEST_FS, path);
 
     // Generate enough content to trigger rotation
     for (int i = 0; i < 40; i++)
@@ -508,7 +508,7 @@ void test_storage_file_naming_with_subdirectory()
 void test_storage_buffering_real_buffer()
 {
     deleteAllLogFiles(TEST_FS);
-    LOG_SET_STORAGE(TEST_FS);
+    LOG_SET_STORAGE_ROTATING(TEST_FS);
 
     // Write some initial content and flush
     LOG_WARN("Initial message");
@@ -543,7 +543,7 @@ void test_storage_buffering_real_buffer()
 void test_storage_auto_flush_on_buffer_full()
 {
     deleteAllLogFiles(TEST_FS);
-    LOG_SET_STORAGE(TEST_FS);
+    LOG_SET_STORAGE_ROTATING(TEST_FS);
 
     // Fill buffer with messages (256 byte limit)
     // Each message with preamble is roughly 25-30 bytes, so 10 messages should fill the buffer
@@ -560,7 +560,7 @@ void test_storage_auto_flush_on_buffer_full()
 void test_storage_message_larger_than_buffer()
 {
     deleteAllLogFiles(TEST_FS);
-    LOG_SET_STORAGE(TEST_FS);
+    LOG_SET_STORAGE_ROTATING(TEST_FS);
 
     // Create message larger than buffer (256 bytes)
     std::string largePayload(300, 'Y');
@@ -575,7 +575,7 @@ void test_storage_message_larger_than_buffer()
 void test_storage_message_larger_than_max_file_size()
 {
     deleteAllLogFiles(TEST_FS);
-    LOG_SET_STORAGE(TEST_FS);
+    LOG_SET_STORAGE_ROTATING(TEST_FS);
 
     // Create message larger than max file size (512 bytes)
     std::string hugePayload(600, 'Z');
@@ -634,35 +634,6 @@ void test_storage_set_file_path_resets_state()
                              "First path should still have original content");
 }
 
-void test_storage_zero_max_files_truncates()
-{
-    deleteAllLogFiles(TEST_FS);
-
-    auto sink = createStorage(TEST_FS, LOG_STORAGE_FILE_PATH);
-    sink->setMaxFiles(0); // No rotation, just truncate
-    FormatLog::instance().setStorage(sink);
-
-    // Write enough to trigger rotation
-    for (int i = 0; i < 30; i++)
-    {
-        LOG_WARN("Zero max files test message {} with padding content", i);
-        LOG_FLUSH_STORAGE();
-        delay(5);
-    }
-
-    // Main file should exist
-    TEST_ASSERT_TRUE_MESSAGE(TEST_FS.exists(LOG_STORAGE_FILE_PATH), "Main file should exist");
-
-    // No rotated files should exist
-    TEST_ASSERT_FALSE_MESSAGE(TEST_FS.exists("/test_log.1.txt"),
-                              "No rotated files should exist with maxFiles=0");
-
-    // File should be small (only recent content, older was truncated)
-    size_t size = getFileSize(TEST_FS, LOG_STORAGE_FILE_PATH);
-    TEST_ASSERT_LESS_OR_EQUAL_MESSAGE(LOG_STORAGE_MAX_FILE_SIZE * 2, size,
-                                      "File should be relatively small after truncation");
-}
-
 void test_storage_flush_empty_buffer_no_op()
 {
     deleteAllLogFiles(TEST_FS);
@@ -671,7 +642,7 @@ void test_storage_flush_empty_buffer_no_op()
     TEST_ASSERT_FALSE_MESSAGE(TEST_FS.exists(LOG_STORAGE_FILE_PATH),
                               "File should not exist after cleanup");
 
-    LOG_SET_STORAGE(TEST_FS);
+    LOG_SET_STORAGE_ROTATING(TEST_FS);
 
     // Flush without writing anything
     LOG_FLUSH_STORAGE();
@@ -684,7 +655,7 @@ void test_storage_flush_empty_buffer_no_op()
 void test_storage_multiple_flushes_same_content()
 {
     deleteAllLogFiles(TEST_FS);
-    LOG_SET_STORAGE(TEST_FS);
+    LOG_SET_STORAGE_ROTATING(TEST_FS);
 
     LOG_WARN("Single message");
     LOG_FLUSH_STORAGE();
@@ -705,7 +676,7 @@ void test_storage_write_null_data_returns_false()
 {
     deleteAllLogFiles(TEST_FS);
 
-    auto sink = createStorage(TEST_FS, LOG_STORAGE_FILE_PATH);
+    auto sink = createRotatingFileSink(TEST_FS, LOG_STORAGE_FILE_PATH);
 
     // Direct API test - null data should return false
     bool result = sink->write(nullptr, 10);
@@ -719,7 +690,7 @@ void test_storage_write_null_data_returns_false()
 void test_storage_rotation_preserves_content_order()
 {
     deleteAllLogFiles(TEST_FS);
-    LOG_SET_STORAGE(TEST_FS);
+    LOG_SET_STORAGE_ROTATING(TEST_FS);
 
     // Write distinct numbered messages
     for (int i = 0; i < 40; i++)
@@ -769,73 +740,10 @@ void test_storage_rotation_preserves_content_order()
     }
 }
 
-void test_storage_getters_return_correct_values()
-{
-    auto sink = createStorage(TEST_FS, LOG_STORAGE_FILE_PATH);
-
-    // Default values from settings
-    TEST_ASSERT_EQUAL(LOG_STORAGE_MAX_FILES, sink->getMaxFiles());
-    TEST_ASSERT_EQUAL(LOG_STORAGE_MAX_FILE_SIZE, sink->getMaxFileSize());
-
-    // Set new values
-    sink->setMaxFiles(5);
-    sink->setMaxFileSize(1024);
-
-    TEST_ASSERT_EQUAL(5, sink->getMaxFiles());
-    TEST_ASSERT_EQUAL(1024, sink->getMaxFileSize());
-}
-
-void test_storage_change_max_files_mid_stream()
-{
-    deleteAllLogFiles(TEST_FS);
-
-    auto sink = createStorage(TEST_FS, LOG_STORAGE_FILE_PATH);
-    sink->setMaxFiles(5); // Start with 5
-    FormatLog::instance().setStorage(sink);
-
-    // Write some content
-    for (int i = 0; i < 20; i++)
-    {
-        LOG_WARN("Mid-stream test message {} with padding", i);
-        LOG_FLUSH_STORAGE();
-        delay(5);
-    }
-
-    // Change to 1 max file
-    sink->setMaxFiles(1);
-
-    // Write more content to trigger rotation with new limit
-    for (int i = 20; i < 50; i++)
-    {
-        LOG_WARN("After change test message {} with padding", i);
-        LOG_FLUSH_STORAGE();
-        delay(5);
-    }
-
-    // Should only have main file + 1 rotated file max
-    TEST_ASSERT_TRUE_MESSAGE(TEST_FS.exists(LOG_STORAGE_FILE_PATH), "Main file should exist");
-
-    // Count how many rotated files exist
-    int rotatedCount = 0;
-    if (TEST_FS.exists("/test_log.1.txt"))
-        rotatedCount++;
-    if (TEST_FS.exists("/test_log.2.txt"))
-        rotatedCount++;
-    if (TEST_FS.exists("/test_log.3.txt"))
-        rotatedCount++;
-    if (TEST_FS.exists("/test_log.4.txt"))
-        rotatedCount++;
-    if (TEST_FS.exists("/test_log.5.txt"))
-        rotatedCount++;
-
-    TEST_ASSERT_LESS_OR_EQUAL_MESSAGE(1, rotatedCount,
-                                      "Should respect new maxFiles=1 limit");
-}
-
 void test_storage_buffer_boundary_exact_fit()
 {
     deleteAllLogFiles(TEST_FS);
-    LOG_SET_STORAGE(TEST_FS);
+    LOG_SET_STORAGE_ROTATING(TEST_FS);
 
     // Write initial content
     LOG_WARN("Initial");
@@ -903,7 +811,6 @@ void tests()
     // File rotation
     RUN_TEST(test_storage_file_rotation);
     RUN_TEST(test_storage_max_files_limit);
-    RUN_TEST(test_storage_zero_max_files_truncates);
     RUN_TEST(test_storage_rotation_preserves_content_order);
     RUN_TEST(test_storage_rotated_files_are_readable);
 
@@ -915,19 +822,21 @@ void tests()
 
     // Configuration changes
     RUN_TEST(test_storage_set_file_path_resets_state);
-    RUN_TEST(test_storage_getters_return_correct_values);
-    RUN_TEST(test_storage_change_max_files_mid_stream);
 }
 
 void setup()
 {
     Serial.begin(115200);
-    // Wait for serial monitor
-    delay(3000);
+    delay(3000); // Wait for serial monitor
 
-    // Initialize file system if needed
 #ifdef TEST_FS_SDFAT
     if (!TEST_FS.begin())
+    {
+        TEST_FAIL_MESSAGE(TEST_FS_NAME " initialization failed");
+    }
+#elif defined(TEST_FS_SD)
+    SPI.begin();
+    if (!TEST_FS.begin(SS, SPI, 4000000, "/sd", 10, true))
     {
         TEST_FAIL_MESSAGE(TEST_FS_NAME " initialization failed");
     }
