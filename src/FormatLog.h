@@ -6,7 +6,7 @@
 #include "FmtLib.h"
 
 #if LOG_STORAGE_ENABLE
-#include "Storage/SinkFactory.h"
+#include "Storage/StorageFactory.h"
 #endif
 
 /**--------------------------------------------------------------------------------------

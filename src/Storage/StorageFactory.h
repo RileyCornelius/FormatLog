@@ -2,11 +2,11 @@
 
 #include <memory>
 #include "Config/Settings.h"
-#include "IFileSink.h"
-#include "FileManager.h"
-#include "DirectFileSink.h"
-#include "RotatingFileSink.h"
-#include "BufferedSink.h"
+#include "Storage/Sinks/IFileSink.h"
+#include "Storage/FileSystem/FileManager.h"
+#include "Storage/Sinks/DirectFileSink.h"
+#include "Storage/Sinks/RotatingFileSink.h"
+#include "Storage/Sinks/BufferedSink.h"
 
 /**
  * Factory function to create a DirectFileSink with FileManager

@@ -4,7 +4,7 @@
 #include <string>
 #include "Config/Settings.h"
 #include "IFileSink.h"
-#include "IFileManager.h"
+#include "Storage/FileSystem/IFileManager.h"
 
 class DirectFileSink : public IFileSink
 {
