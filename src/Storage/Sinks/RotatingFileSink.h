@@ -7,9 +7,11 @@
 #include "IFileSink.h"
 #include "Storage/FileSystem/IFileManager.h"
 
+template <size_t BufferSize = LOG_STORAGE_MAX_BUFFER_SIZE>
 class RotatingFileSink : public IFileSink
 {
 private:
+    fmt::basic_memory_buffer<char, BufferSize> _buffer;
     std::shared_ptr<IFileManager> _fileManager;
     std::string _filePath;
     std::string _baseName;
@@ -33,17 +35,14 @@ private:
     std::string createFilePath(size_t index) const
     {
         if (index == 0)
-        {
             return _filePath;
-        }
-        return fmt::format("{}.{}{}", _baseName, index, _extension); // Example: log.1.txt
+        return fmt::format("{}.{}{}", _baseName, index, _extension);
     }
 
     bool ensureOpen()
     {
         if (_fileManager->isOpen())
             return true;
-
         return _fileManager->open(_filePath.c_str());
     }
 
@@ -52,7 +51,6 @@ private:
         if (_initialized)
             return;
 
-        // Get the existing file size or rotate it
         if (_fileManager->exists(_filePath.c_str()))
         {
             if (_rotateOnInit)
@@ -66,6 +64,23 @@ private:
         }
 
         _initialized = true;
+    }
+
+    void writeBufferToFile()
+    {
+        if (_buffer.size() == 0)
+            return;
+
+        if (!ensureOpen())
+        {
+            _buffer.clear();
+            return;
+        }
+
+        size_t written = _fileManager->write(_buffer.data(), _buffer.size());
+        _fileManager->flush();
+        _currentSize += written;
+        _buffer.clear();
     }
 
 public:
@@ -92,12 +107,13 @@ public:
 
     void close() override
     {
+        flush();
         _fileManager->close();
     }
 
     void flush() override
     {
-        _fileManager->flush();
+        writeBufferToFile();
     }
 
     bool write(const char *data, size_t size) override
@@ -107,23 +123,36 @@ public:
 
         initFile();
 
-        if (_currentSize > 0 && _currentSize + size > _maxFileSize)
+        if (size > BufferSize)
+        {
+            flush();
+
+            if (_currentSize + size > _maxFileSize)
+                rotate();
+
+            if (!ensureOpen())
+                return false;
+
+            size_t written = _fileManager->write(data, size);
+            _fileManager->flush();
+            _currentSize += written;
+            return written == size;
+        }
+
+        if (_buffer.size() + size > BufferSize)
+            flush();
+
+        if (_currentSize + _buffer.size() + size > _maxFileSize)
             rotate();
 
-        if (!ensureOpen())
-            return false;
-
-        size_t written = _fileManager->write(data, size);
-        _fileManager->flush();
-        _currentSize += written;
-        return written == size;
+        _buffer.append(data, data + size);
+        return true;
     }
 
     void rotate()
     {
-        _fileManager->close();
+        close();
 
-        // If max_files is 0, just restart the main file
         if (_maxFiles == 0)
         {
             _fileManager->remove(_filePath.c_str());
@@ -131,20 +160,15 @@ public:
             return;
         }
 
-        std::string oldestFile = createFilePath(_maxFiles);
-        _fileManager->remove(oldestFile.c_str());
+        _fileManager->remove(createFilePath(_maxFiles).c_str());
 
         for (size_t i = _maxFiles; i > 0; --i)
         {
             std::string src = createFilePath(i - 1);
-
             if (!_fileManager->exists(src.c_str()))
-            {
                 continue;
-            }
 
             std::string target = createFilePath(i);
-
             _fileManager->remove(target.c_str());
             _fileManager->rename(src.c_str(), target.c_str());
         }

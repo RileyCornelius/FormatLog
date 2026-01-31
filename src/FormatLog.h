@@ -356,31 +356,15 @@ public:
 
 #if LOG_STORAGE_ENABLE
 /**
+ * Configure storage with rotating file sink and external buffering.
+ *
+ * Buffer size: Set LOG_STORAGE_MAX_BUFFER_SIZE to control memory buffer size (default = 4096)
+ * Rotation: Set LOG_STORAGE_MAX_FILES = 0 for single file (no backups, default = 3)
+ *
  * @param fs Reference to the file system (SPIFFS, LittleFS, SD, SdFat)
- * @param filePath Path to the log file
+ * @param ... Optional: filePath, maxFiles, maxFileSize, rotateOnInit
  */
-#define LOG_SET_STORAGE(fs, ...) FormatLog::instance().setStorage(createDirectFileSink(fs, ##__VA_ARGS__))
-/**
- * @param fs Reference to the file system (SPIFFS, LittleFS, SD, SdFat)
- * @param filePath Path to the log file
- */
-#define LOG_SET_STORAGE_BUFFERED(fs, ...) FormatLog::instance().setStorage(createBufferedDirectFileSink(fs, ##__VA_ARGS__))
-/**
- * @param fs Reference to the file system (SPIFFS, LittleFS, SD, SdFat)
- * @param filePath Path to the log file
- * @param maxFiles Maximum number of rotated files to keep (eg. "3" keeps .1, .2, .3, main file)
- * @param maxFileSize Maximum size of each log file before rotation
- * @param rotateOnInit Whether to rotate the existing log file on initialization
- */
-#define LOG_SET_STORAGE_ROTATING(fs, ...) FormatLog::instance().setStorage(createRotatingFileSink(fs, ##__VA_ARGS__))
-/**
- * @param fs Reference to the file system (SPIFFS, LittleFS, SD, SdFat)
- * @param filePath Path to the log file
- * @param maxFiles Maximum number of rotated files to keep (eg. "3" keeps .1, .2, .3, main file)
- * @param maxFileSize Maximum size of each log file before rotation
- * @param rotateOnInit Whether to rotate the existing log file on initialization
- */
-#define LOG_SET_STORAGE_ROTATING_BUFFERED(fs, ...) FormatLog::instance().setStorage(createBufferedRotatingFileSink(fs, ##__VA_ARGS__))
+#define LOG_SET_STORAGE(fs, ...) FormatLog::instance().setStorage(createStorage(fs, ##__VA_ARGS__))
 #define LOG_SET_STORAGE_LOG_LEVEL(level) FormatLog::instance().setStorageLogLevel(level)
 #define LOG_GET_STORAGE_LOG_LEVEL() FormatLog::instance().getStorageLogLevel()
 #define LOG_FLUSH_STORAGE() FormatLog::instance().flushStorage()
@@ -388,9 +372,6 @@ public:
 #define LOG_GET_STORAGE_FILE_PATH() FormatLog::instance().getStorageFilePath()
 #else
 #define LOG_SET_STORAGE(fs, ...)
-#define LOG_SET_STORAGE_BUFFERED(fs, ...)
-#define LOG_SET_STORAGE_ROTATING(fs, ...)
-#define LOG_SET_STORAGE_ROTATING_BUFFERED(fs, ...)
 #define LOG_SET_STORAGE_LOG_LEVEL(level)
 #define LOG_GET_STORAGE_LOG_LEVEL() LogLevel::DISABLE
 #define LOG_FLUSH_STORAGE()

@@ -4,9 +4,9 @@
 #include "unity.h"
 
 // File System Selection - Choose one:
-// #define TEST_FS_SPIFFS
+#define TEST_FS_SPIFFS
 // #define TEST_FS_LITTLEFS
-#define TEST_FS_SD
+// #define TEST_FS_SD
 // #define TEST_FS_SDFAT
 
 #ifdef TEST_FS_SPIFFS
@@ -130,7 +130,7 @@ int countLogFiles(fs::FS &filesystem)
 
 void test_storage_initialization()
 {
-    LOG_SET_STORAGE_ROTATING_BUFFERED(TEST_FS, LOG_STORAGE_FILE_PATH);
+    LOG_SET_STORAGE(TEST_FS, LOG_STORAGE_FILE_PATH);
 
     // File should not exist yet (lazy initialization)
     TEST_ASSERT_FALSE_MESSAGE(TEST_FS.exists(LOG_STORAGE_FILE_PATH), "File should not exist before first log");
@@ -153,7 +153,7 @@ void test_storage_initialization()
 void test_storage_level_filtering()
 {
     deleteAllLogFiles(TEST_FS);
-    LOG_SET_STORAGE_ROTATING_BUFFERED(TEST_FS);
+    LOG_SET_STORAGE(TEST_FS);
 
     // TRACE and DEBUG should not go to storage
     LOG_TRACE("Trace message - should not be in file");
@@ -182,7 +182,7 @@ void test_storage_level_filtering()
 void test_storage_buffering()
 {
     deleteAllLogFiles(TEST_FS);
-    LOG_SET_STORAGE_ROTATING_BUFFERED(TEST_FS);
+    LOG_SET_STORAGE(TEST_FS);
 
     // Log 2 messages (below buffer size limit)
     LOG_WARN("Message 1");
@@ -204,7 +204,7 @@ void test_storage_buffering()
 void test_storage_manual_flush()
 {
     deleteAllLogFiles(TEST_FS);
-    LOG_SET_STORAGE_ROTATING_BUFFERED(TEST_FS);
+    LOG_SET_STORAGE(TEST_FS);
 
     LOG_WARN("Before flush");
 
@@ -225,7 +225,7 @@ void test_storage_manual_flush()
 void test_storage_file_rotation()
 {
     deleteAllLogFiles(TEST_FS);
-    LOG_SET_STORAGE_ROTATING_BUFFERED(TEST_FS);
+    LOG_SET_STORAGE(TEST_FS);
 
     // Generate enough messages to exceed file size limit (512 bytes)
     for (int i = 0; i < 30; i++)
@@ -251,7 +251,7 @@ void test_storage_file_rotation()
 void test_storage_max_files_limit()
 {
     deleteAllLogFiles(TEST_FS);
-    LOG_SET_STORAGE_ROTATING_BUFFERED(TEST_FS);
+    LOG_SET_STORAGE(TEST_FS);
 
     // Generate many messages to create multiple rotations
     for (int i = 0; i < 60; i++)
@@ -273,7 +273,7 @@ void test_storage_max_files_limit()
 
 void test_storage_file_naming()
 {
-    LOG_SET_STORAGE_ROTATING_BUFFERED(TEST_FS);
+    LOG_SET_STORAGE(TEST_FS);
     deleteAllLogFiles(TEST_FS);
 
     // Generate enough content for rotation
@@ -301,7 +301,7 @@ void test_storage_file_naming()
 void test_storage_empty_logs()
 {
     deleteAllLogFiles(TEST_FS);
-    LOG_SET_STORAGE_ROTATING_BUFFERED(TEST_FS);
+    LOG_SET_STORAGE(TEST_FS);
 
     // Log only non-storage level messages
     LOG_TRACE("Trace");
@@ -318,7 +318,7 @@ void test_storage_empty_logs()
 void test_storage_large_message()
 {
     deleteAllLogFiles(TEST_FS);
-    LOG_SET_STORAGE_ROTATING_BUFFERED(TEST_FS);
+    LOG_SET_STORAGE(TEST_FS);
 
     // Create a large message
     std::string largePayload(200, 'X');
@@ -333,7 +333,7 @@ void test_storage_large_message()
 void test_storage_rotated_files_are_readable()
 {
     deleteAllLogFiles(TEST_FS);
-    LOG_SET_STORAGE_ROTATING_BUFFERED(TEST_FS);
+    LOG_SET_STORAGE(TEST_FS);
 
     // Create enough content to trigger at least one rotation.
     for (int i = 0; i < 40; i++)
@@ -381,7 +381,7 @@ void test_storage_file_naming_no_extension()
     deleteAllLogFiles(TEST_FS);
 
     const char *path = "/test_log_noext";
-    LOG_SET_STORAGE_ROTATING_BUFFERED(TEST_FS, path);
+    LOG_SET_STORAGE(TEST_FS, path);
 
     // Generate enough content to trigger at least one rotation.
     for (int i = 0; i < 40; i++)
@@ -418,7 +418,7 @@ void test_storage_file_naming_multiple_extensions()
     // Multiple extensions: last extension should be preserved.
     // FileManager::rotate() splits on the last '.', so expected rotated name is: /log.txt.1.md
     const char *path = "/log.txt.md";
-    LOG_SET_STORAGE_ROTATING_BUFFERED(TEST_FS, path);
+    LOG_SET_STORAGE(TEST_FS, path);
 
     for (int i = 0; i < 45; i++)
     {
@@ -467,7 +467,7 @@ void test_storage_file_naming_with_subdirectory()
     }
     TEST_ASSERT_TRUE_MESSAGE(TEST_FS.exists(dir), "Subdirectory should exist");
 
-    LOG_SET_STORAGE_ROTATING_BUFFERED(TEST_FS, path);
+    LOG_SET_STORAGE(TEST_FS, path);
 
     // Generate enough content to trigger rotation
     for (int i = 0; i < 40; i++)
@@ -508,7 +508,7 @@ void test_storage_file_naming_with_subdirectory()
 void test_storage_buffering_real_buffer()
 {
     deleteAllLogFiles(TEST_FS);
-    LOG_SET_STORAGE_ROTATING_BUFFERED(TEST_FS);
+    LOG_SET_STORAGE(TEST_FS);
 
     // Write some initial content and flush
     LOG_WARN("Initial message");
@@ -543,7 +543,7 @@ void test_storage_buffering_real_buffer()
 void test_storage_auto_flush_on_buffer_full()
 {
     deleteAllLogFiles(TEST_FS);
-    LOG_SET_STORAGE_ROTATING_BUFFERED(TEST_FS);
+    LOG_SET_STORAGE(TEST_FS);
 
     // Fill buffer with messages (256 byte limit)
     // Each message with preamble is roughly 25-30 bytes, so 10 messages should fill the buffer
@@ -560,7 +560,7 @@ void test_storage_auto_flush_on_buffer_full()
 void test_storage_message_larger_than_buffer()
 {
     deleteAllLogFiles(TEST_FS);
-    LOG_SET_STORAGE_ROTATING_BUFFERED(TEST_FS);
+    LOG_SET_STORAGE(TEST_FS);
 
     // Create message larger than buffer (256 bytes)
     std::string largePayload(300, 'Y');
@@ -575,7 +575,7 @@ void test_storage_message_larger_than_buffer()
 void test_storage_message_larger_than_max_file_size()
 {
     deleteAllLogFiles(TEST_FS);
-    LOG_SET_STORAGE_ROTATING_BUFFERED(TEST_FS);
+    LOG_SET_STORAGE(TEST_FS);
 
     // Create message larger than max file size (512 bytes)
     std::string hugePayload(600, 'Z');
@@ -604,7 +604,7 @@ void test_storage_set_file_path_resets_state()
 
     // Create concrete RotatingFileSink to access setFilePath
     auto fileManager = std::make_shared<FileManager<decltype(TEST_FS)>>(TEST_FS);
-    auto sink = std::make_shared<RotatingFileSink>(fileManager, path1);
+    auto sink = std::make_shared<RotatingFileSink<>>(fileManager, path1);
     FormatLog::instance().setStorage(sink);
 
     // Write to first path
@@ -642,7 +642,7 @@ void test_storage_flush_empty_buffer_no_op()
     TEST_ASSERT_FALSE_MESSAGE(TEST_FS.exists(LOG_STORAGE_FILE_PATH),
                               "File should not exist after cleanup");
 
-    LOG_SET_STORAGE_ROTATING_BUFFERED(TEST_FS);
+    LOG_SET_STORAGE(TEST_FS);
 
     // Flush without writing anything
     LOG_FLUSH_STORAGE();
@@ -655,7 +655,7 @@ void test_storage_flush_empty_buffer_no_op()
 void test_storage_multiple_flushes_same_content()
 {
     deleteAllLogFiles(TEST_FS);
-    LOG_SET_STORAGE_ROTATING_BUFFERED(TEST_FS);
+    LOG_SET_STORAGE(TEST_FS);
 
     LOG_WARN("Single message");
     LOG_FLUSH_STORAGE();
@@ -676,7 +676,7 @@ void test_storage_write_null_data_returns_false()
 {
     deleteAllLogFiles(TEST_FS);
 
-    auto sink = createRotatingFileSink(TEST_FS, LOG_STORAGE_FILE_PATH);
+    auto sink = createStorage(TEST_FS, LOG_STORAGE_FILE_PATH);
 
     // Direct API test - null data should return false
     bool result = sink->write(nullptr, 10);
@@ -690,7 +690,7 @@ void test_storage_write_null_data_returns_false()
 void test_storage_rotation_preserves_content_order()
 {
     deleteAllLogFiles(TEST_FS);
-    LOG_SET_STORAGE_ROTATING_BUFFERED(TEST_FS);
+    LOG_SET_STORAGE(TEST_FS);
 
     // Write distinct numbered messages
     for (int i = 0; i < 40; i++)
@@ -743,7 +743,7 @@ void test_storage_rotation_preserves_content_order()
 void test_storage_buffer_boundary_exact_fit()
 {
     deleteAllLogFiles(TEST_FS);
-    LOG_SET_STORAGE_ROTATING_BUFFERED(TEST_FS);
+    LOG_SET_STORAGE(TEST_FS);
 
     // Write initial content
     LOG_WARN("Initial");
@@ -766,6 +766,106 @@ void test_storage_buffer_boundary_exact_fit()
     size_t sizeAfterFlush = getFileSize(TEST_FS, LOG_STORAGE_FILE_PATH);
     TEST_ASSERT_GREATER_THAN_MESSAGE(initialSize, sizeAfterFlush,
                                      "Content should be written after flush");
+}
+
+void test_storage_buffer_overflow_and_file_rotation()
+{
+    deleteAllLogFiles(TEST_FS);
+    LOG_SET_STORAGE(TEST_FS);
+
+    // Scenario: Buffer is nearly full, file is nearly full
+    // Buffer: 256 bytes max
+    // File: 512 bytes max
+    // Fill file to near capacity (480 bytes)
+    for (int i = 0; i < 20; i++)
+    {
+        LOG_WARN("Fill{:02d}", i); // ~14 bytes each = 280 bytes total
+        LOG_FLUSH_STORAGE();
+    }
+
+    size_t fileSize = getFileSize(TEST_FS, LOG_STORAGE_FILE_PATH);
+    TEST_ASSERT_GREATER_THAN_MESSAGE(250, fileSize, "File should be substantially filled");
+    TEST_ASSERT_LESS_THAN_MESSAGE(LOG_STORAGE_MAX_FILE_SIZE, fileSize, "File should not be at max yet");
+
+    // Now add data to buffer without flushing (fill buffer to ~200 bytes)
+    std::string bufferFill(180, 'X');
+    LOG_WARN("{}", bufferFill.c_str());
+
+    // File size should not change yet (data is buffered)
+    size_t fileSizeBeforeOverflow = getFileSize(TEST_FS, LOG_STORAGE_FILE_PATH);
+    TEST_ASSERT_EQUAL_MESSAGE(fileSize, fileSizeBeforeOverflow, "File should not grow (data buffered)");
+
+    // Now write a message that will:
+    // 1. Trigger buffer overflow (buffer 180+ + new 100+ > 256)
+    // 2. After flush, total file size will exceed max (file + buffer > 512)
+    // Expected: Buffer flushes first, then rotation happens
+    std::string triggerMsg(100, 'Y');
+    LOG_WARN("{}", triggerMsg.c_str());
+
+    LOG_FLUSH_STORAGE();
+
+    // After flush, we should have rotated
+    // Check that rotation occurred
+    bool rotatedFileExists = TEST_FS.exists("/test_log.1.txt");
+    TEST_ASSERT_TRUE_MESSAGE(rotatedFileExists, "Rotated file should exist");
+
+    // Main file should be small (just the last message)
+    size_t newMainFileSize = getFileSize(TEST_FS, LOG_STORAGE_FILE_PATH);
+    TEST_ASSERT_LESS_THAN_MESSAGE(200, newMainFileSize, "New main file should be small");
+
+    // Rotated file should have the old content
+    size_t rotatedFileSize = getFileSize(TEST_FS, "/test_log.1.txt");
+    TEST_ASSERT_GREATER_THAN_MESSAGE(400, rotatedFileSize, "Rotated file should have substantial content");
+}
+
+void test_storage_oversized_message_with_file_rotation()
+{
+    deleteAllLogFiles(TEST_FS);
+    LOG_SET_STORAGE(TEST_FS);
+
+    // Scenario: File is moderately full, oversized message would exceed file size
+    // Fill file to ~350 bytes
+    for (int i = 0; i < 15; i++)
+    {
+        LOG_WARN("Prepare{:02d}_content", i);
+        LOG_FLUSH_STORAGE();
+    }
+
+    size_t initialFileSize = getFileSize(TEST_FS, LOG_STORAGE_FILE_PATH);
+    TEST_ASSERT_GREATER_THAN_MESSAGE(200, initialFileSize, "File should be partially filled");
+    TEST_ASSERT_LESS_THAN_MESSAGE(LOG_STORAGE_MAX_FILE_SIZE, initialFileSize, "File should be under max");
+
+    // Add some data to buffer (not flushed)
+    LOG_WARN("Buffered data");
+
+    // Now write an OVERSIZED message (larger than buffer size of 256)
+    // This should:
+    // 1. Flush the buffer first (adding to file)
+    // 2. Check if oversized message + file > max file size
+    // 3. Rotate if needed
+    // 4. Write oversized message directly to (new) file
+    std::string oversizedMsg(300, 'Z'); // Larger than 256 byte buffer
+    LOG_WARN("OVERSIZED:{}", oversizedMsg.c_str());
+
+    LOG_FLUSH_STORAGE();
+
+    // Check that rotation occurred
+    bool rotatedExists = TEST_FS.exists("/test_log.1.txt");
+    TEST_ASSERT_TRUE_MESSAGE(rotatedExists, "Rotation should have occurred");
+
+    // Rotated file should have the initial content + buffered data
+    size_t rotatedSize = getFileSize(TEST_FS, "/test_log.1.txt");
+    TEST_ASSERT_GREATER_THAN_MESSAGE(initialFileSize, rotatedSize, "Rotated file should have initial + buffered content");
+
+    // Main file should have the oversized message
+    size_t mainFileSize = getFileSize(TEST_FS, LOG_STORAGE_FILE_PATH);
+    TEST_ASSERT_GREATER_THAN_MESSAGE(300, mainFileSize, "Main file should have oversized message");
+    TEST_ASSERT_LESS_THAN_MESSAGE(LOG_STORAGE_MAX_FILE_SIZE, mainFileSize, "Oversized message should fit in fresh file");
+
+    // Verify content
+    std::string mainContent = readFile(TEST_FS, LOG_STORAGE_FILE_PATH);
+    TEST_ASSERT_TRUE_MESSAGE(mainContent.find(oversizedMsg) != std::string::npos,
+                             "Main file should contain the oversized message");
 }
 
 /*------------------------------------------------------------------------------
@@ -808,6 +908,10 @@ void tests()
     RUN_TEST(test_storage_message_larger_than_max_file_size);
     RUN_TEST(test_storage_write_null_data_returns_false);
 
+    // Complex scenarios (buffer + file interactions)
+    RUN_TEST(test_storage_buffer_overflow_and_file_rotation);
+    RUN_TEST(test_storage_oversized_message_with_file_rotation);
+
     // File rotation
     RUN_TEST(test_storage_file_rotation);
     RUN_TEST(test_storage_max_files_limit);
@@ -824,15 +928,23 @@ void tests()
     RUN_TEST(test_storage_set_file_path_resets_state);
 }
 
+// SdFs sd;
+
 void setup()
 {
     Serial.begin(115200);
     delay(3000); // Wait for serial monitor
 
 #ifdef TEST_FS_SDFAT
-    if (!TEST_FS.begin())
+
+    SPI.begin();
+    if (!TEST_FS.begin(SdSpiConfig(SS, DEDICATED_SPI, SD_SCK_MHZ(16))))
     {
         TEST_FAIL_MESSAGE(TEST_FS_NAME " initialization failed");
+    }
+    if (!TEST_FS.volumeBegin())
+    {
+        TEST_FAIL_MESSAGE(TEST_FS_NAME " format failed");
     }
 #elif defined(TEST_FS_SD)
     SPI.begin();

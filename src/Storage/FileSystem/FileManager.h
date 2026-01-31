@@ -67,6 +67,10 @@ public:
 
     size_t size() const override
     {
+        if (!file)
+        {
+            return 0;
+        }
         return file.size();
     }
 
