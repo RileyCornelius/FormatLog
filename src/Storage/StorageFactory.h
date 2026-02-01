@@ -5,6 +5,7 @@
 #include "Storage/Sinks/IFileSink.h"
 #include "Storage/FileSystem/FileManagerFactory.h"
 #include "Storage/Sinks/RotatingFileSink.h"
+#include "Storage/Sinks/SimpleFileSink.h"
 
 /**
  * Factory function to create a storage sink with rotating file and buffering.
@@ -22,12 +23,30 @@
  * @return Shared pointer to IFileSink
  */
 template <typename TFileSystem, size_t BufferSize = LOG_STORAGE_MAX_BUFFER_SIZE>
-std::shared_ptr<IFileSink> createStorage(TFileSystem &fs,
-                                         const char *filePath = LOG_STORAGE_FILE_PATH,
-                                         size_t maxFiles = LOG_STORAGE_MAX_FILES,
-                                         size_t maxFileSize = LOG_STORAGE_MAX_FILE_SIZE,
-                                         bool rotateOnInit = LOG_STORAGE_NEW_FILE_ON_BOOT)
+std::shared_ptr<IFileSink> createRotatingStorage(TFileSystem &fs,
+                                                 const char *filePath = LOG_STORAGE_FILE_PATH,
+                                                 size_t maxFiles = LOG_STORAGE_MAX_FILES,
+                                                 size_t maxFileSize = LOG_STORAGE_MAX_FILE_SIZE,
+                                                 bool rotateOnInit = LOG_STORAGE_NEW_FILE_ON_BOOT)
 {
     auto fileManager = createFileManager(fs);
     return std::make_shared<RotatingFileSink<BufferSize>>(fileManager, filePath, maxFiles, maxFileSize, rotateOnInit);
+}
+
+/**
+ * Factory function to create a simple storage sink with no buffering or rotation.
+ *
+ * Writes are flushed directly to the filesystem on each call.
+ *
+ * @tparam TFileSystem Filesystem type (SPIFFS, LittleFS, SD, SdFat)
+ * @param fs Reference to the file system
+ * @param filePath Path to the log file
+ * @return Shared pointer to IFileSink
+ */
+template <typename TFileSystem>
+std::shared_ptr<IFileSink> createSimpleStorage(TFileSystem &fs,
+                                               const char *filePath = LOG_STORAGE_FILE_PATH)
+{
+    auto fileManager = createFileManager(fs);
+    return std::make_shared<SimpleFileSink>(fileManager, filePath);
 }

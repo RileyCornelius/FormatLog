@@ -367,12 +367,12 @@ public:
 #if LOG_STORAGE_ENABLE
 /**
  * @param fs Reference to the file system
- * @param filePath (optional) Path to the log file
- * @param maxFiles (optional) Maximum number of rotated files to keep (eg. "3" keeps .1, .2, .3, main file)
- * @param maxFileSize (optional) Maximum size of each log file before rotation
- * @param rotateOnInit (optional) Whether to rotate the existing log file on initialization
+ * @param filePath (Optional) Path to the log file
+ * @param maxFiles (Optional) Maximum number of rotated files to keep (eg. "3" keeps .1, .2, .3, main file)
+ * @param maxFileSize (Optional) Maximum size of each log file before rotation
+ * @param rotateOnInit (Optional) Whether to rotate the existing log file on initialization
  */
-#define LOG_SET_STORAGE(fs, ...) FormatLog::instance().setStorage(createStorage(fs, ##__VA_ARGS__))
+#define LOG_SET_STORAGE(fs, ...) FormatLog::instance().setStorage(createRotatingStorage(fs, ##__VA_ARGS__))
 #define LOG_SET_STORAGE_LOG_LEVEL(level) FormatLog::instance().setStorageLogLevel(level)
 #define LOG_GET_STORAGE_LOG_LEVEL() FormatLog::instance().getStorageLogLevel()
 #define LOG_FLUSH_STORAGE() FormatLog::instance().flushStorage()

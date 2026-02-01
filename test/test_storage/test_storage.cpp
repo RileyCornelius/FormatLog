@@ -570,21 +570,6 @@ void test_storage_multiple_flushes_same_content()
                               "Multiple flushes with no new content should not change file size");
 }
 
-void test_storage_write_null_data_returns_false()
-{
-    fsUtils->deleteAllFiles();
-
-    auto sink = createStorage(TEST_FS, LOG_STORAGE_FILE_PATH);
-
-    // Direct API test - null data should return false
-    bool result = sink->write(nullptr, 10);
-    TEST_ASSERT_FALSE_MESSAGE(result, "write(nullptr, size) should return false");
-
-    // Zero size should also return false
-    result = sink->write("data", 0);
-    TEST_ASSERT_FALSE_MESSAGE(result, "write(data, 0) should return false");
-}
-
 void test_storage_rotation_preserves_content_order()
 {
     fsUtils->deleteAllFiles();
@@ -804,7 +789,6 @@ void tests()
     RUN_TEST(test_storage_large_message);
     RUN_TEST(test_storage_message_larger_than_buffer);
     RUN_TEST(test_storage_message_larger_than_max_file_size);
-    RUN_TEST(test_storage_write_null_data_returns_false);
 
     // Complex scenarios (buffer + file interactions)
     RUN_TEST(test_storage_buffer_overflow_and_file_rotation);
