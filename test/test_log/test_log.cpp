@@ -108,7 +108,7 @@ void test_assertion_outputs_and_halts()
     gStream.clear();
     gHalted = false;
 
-    ASSERT_M(false, "Oops");
+    ASSERT(false, "Oops");
 
     const std::string &out = gStream.str();
     // Starts with CRLF then [ASSERT]

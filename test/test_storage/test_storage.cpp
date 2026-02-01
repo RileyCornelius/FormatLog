@@ -3,11 +3,11 @@
 #include <vector>
 #include "unity.h"
 
-// File System Selection - Choose one:
-#define TEST_FS_SPIFFS
+// * File System Selection - Choose one:
+// #define TEST_FS_SPIFFS
 // #define TEST_FS_LITTLEFS
 // #define TEST_FS_SD
-// #define TEST_FS_SDFAT
+#define TEST_FS_SDFAT
 
 #ifdef TEST_FS_SPIFFS
 #include <SPIFFS.h>
@@ -43,86 +43,14 @@ SdFat TEST_FS;
 
 #include <FormatLog.h>
 
-/*------------------------------------------------------------------------------
- * Helper Functions
- *----------------------------------------------------------------------------*/
+#include "IFileSystemUtils.h"
+#ifdef TEST_FS_SDFAT
+#include "SdFatFileSystemUtils.h"
+#else
+#include "Esp32FileSystemUtils.h"
+#endif
 
-void deleteAllLogFiles(fs::FS &filesystem)
-{
-    File root = filesystem.open("/");
-    if (!root || !root.isDirectory())
-    {
-        return;
-    }
-
-    File file = root.openNextFile();
-    while (file)
-    {
-        if (!file.isDirectory())
-        {
-            String fileName = String("/") + file.name();
-            file.close();
-            filesystem.remove(fileName.c_str());
-        }
-        else
-        {
-            file.close();
-        }
-        file = root.openNextFile();
-    }
-    root.close();
-}
-
-size_t getFileSize(fs::FS &filesystem, const char *path)
-{
-    if (!filesystem.exists(path))
-        return 0;
-
-    File file = filesystem.open(path, FILE_READ);
-    if (!file)
-        return 0;
-
-    size_t size = file.size();
-    file.close();
-    return size;
-}
-
-std::string readFile(fs::FS &filesystem, const char *path)
-{
-    if (!filesystem.exists(path))
-        return "";
-
-    File file = filesystem.open(path, FILE_READ);
-    if (!file)
-        return "";
-
-    std::string content;
-    while (file.available())
-    {
-        content.push_back(file.read());
-    }
-    file.close();
-    return content;
-}
-
-int countLogFiles(fs::FS &filesystem)
-{
-    int count = 0;
-    const char *files[] = {
-        "/test_log.txt",
-        "/test_log.1.txt",
-        "/test_log.2.txt",
-        "/test_log.3.txt",
-    };
-
-    for (const char *file : files)
-    {
-        if (filesystem.exists(file))
-            count++;
-    }
-
-    return count;
-}
+std::shared_ptr<IFileSystemUtils> fsUtils;
 
 /*------------------------------------------------------------------------------
  * Test Cases
@@ -133,7 +61,7 @@ void test_storage_initialization()
     LOG_SET_STORAGE(TEST_FS, LOG_STORAGE_FILE_PATH);
 
     // File should not exist yet (lazy initialization)
-    TEST_ASSERT_FALSE_MESSAGE(TEST_FS.exists(LOG_STORAGE_FILE_PATH), "File should not exist before first log");
+    TEST_ASSERT_FALSE_MESSAGE(fsUtils->exists(LOG_STORAGE_FILE_PATH), "File should not exist before first log");
 
     // Write a warning message
     LOG_WARN("Test warning message");
@@ -142,17 +70,17 @@ void test_storage_initialization()
     LOG_FLUSH_STORAGE();
 
     // Now file should exist
-    TEST_ASSERT_TRUE_MESSAGE(TEST_FS.exists(LOG_STORAGE_FILE_PATH), "File should exist after flush");
+    TEST_ASSERT_TRUE_MESSAGE(fsUtils->exists(LOG_STORAGE_FILE_PATH), "File should exist after flush");
 
     // Verify content
-    std::string content = readFile(TEST_FS, LOG_STORAGE_FILE_PATH);
+    std::string content = fsUtils->readFile(LOG_STORAGE_FILE_PATH);
     TEST_ASSERT_TRUE_MESSAGE(content.find("Test warning message") != std::string::npos,
                              "File should contain the warning message");
 }
 
 void test_storage_level_filtering()
 {
-    deleteAllLogFiles(TEST_FS);
+    fsUtils->deleteAllFiles();
     LOG_SET_STORAGE(TEST_FS);
 
     // TRACE and DEBUG should not go to storage
@@ -162,7 +90,7 @@ void test_storage_level_filtering()
 
     LOG_FLUSH_STORAGE();
 
-    TEST_ASSERT_FALSE_MESSAGE(TEST_FS.exists(LOG_STORAGE_FILE_PATH),
+    TEST_ASSERT_FALSE_MESSAGE(fsUtils->exists(LOG_STORAGE_FILE_PATH),
                               "File should not exist - no WARN+ messages logged");
 
     // WARN and ERROR should go to storage
@@ -171,9 +99,9 @@ void test_storage_level_filtering()
 
     LOG_FLUSH_STORAGE();
 
-    TEST_ASSERT_TRUE_MESSAGE(TEST_FS.exists(LOG_STORAGE_FILE_PATH), "File should exist after WARN/ERROR and flush");
+    TEST_ASSERT_TRUE_MESSAGE(fsUtils->exists(LOG_STORAGE_FILE_PATH), "File should exist after WARN/ERROR and flush");
 
-    std::string content = readFile(TEST_FS, LOG_STORAGE_FILE_PATH);
+    std::string content = fsUtils->readFile(LOG_STORAGE_FILE_PATH);
     TEST_ASSERT_TRUE_MESSAGE(content.find("Warning message") != std::string::npos, "Should contain WARN");
     TEST_ASSERT_TRUE_MESSAGE(content.find("Error message") != std::string::npos, "Should contain ERROR");
     TEST_ASSERT_TRUE_MESSAGE(content.find("Trace message") == std::string::npos, "Should NOT contain TRACE");
@@ -181,7 +109,7 @@ void test_storage_level_filtering()
 
 void test_storage_buffering()
 {
-    deleteAllLogFiles(TEST_FS);
+    fsUtils->deleteAllFiles();
     LOG_SET_STORAGE(TEST_FS);
 
     // Log 2 messages (below buffer size limit)
@@ -189,12 +117,12 @@ void test_storage_buffering()
     LOG_WARN("Message 2");
 
     // File may not exist yet - data is buffered
-    size_t sizeBeforeFlush = getFileSize(TEST_FS, LOG_STORAGE_FILE_PATH);
+    size_t sizeBeforeFlush = fsUtils->getFileSize(LOG_STORAGE_FILE_PATH);
 
     // Manually flush
     LOG_FLUSH_STORAGE();
 
-    size_t sizeAfterFlush = getFileSize(TEST_FS, LOG_STORAGE_FILE_PATH);
+    size_t sizeAfterFlush = fsUtils->getFileSize(LOG_STORAGE_FILE_PATH);
 
     // Size should be greater after flush
     TEST_ASSERT_GREATER_THAN_MESSAGE(sizeBeforeFlush, sizeAfterFlush,
@@ -203,28 +131,28 @@ void test_storage_buffering()
 
 void test_storage_manual_flush()
 {
-    deleteAllLogFiles(TEST_FS);
+    fsUtils->deleteAllFiles();
     LOG_SET_STORAGE(TEST_FS);
 
     LOG_WARN("Before flush");
 
-    size_t sizeBefore = getFileSize(TEST_FS, LOG_STORAGE_FILE_PATH);
+    size_t sizeBefore = fsUtils->getFileSize(LOG_STORAGE_FILE_PATH);
 
     LOG_FLUSH_STORAGE();
 
-    size_t sizeAfter = getFileSize(TEST_FS, LOG_STORAGE_FILE_PATH);
+    size_t sizeAfter = fsUtils->getFileSize(LOG_STORAGE_FILE_PATH);
 
     TEST_ASSERT_GREATER_THAN_MESSAGE(sizeBefore, sizeAfter,
                                      "Manual flush should write buffered data");
 
-    std::string content = readFile(TEST_FS, LOG_STORAGE_FILE_PATH);
+    std::string content = fsUtils->readFile(LOG_STORAGE_FILE_PATH);
     TEST_ASSERT_TRUE_MESSAGE(content.find("Before flush") != std::string::npos,
                              "Content should be present after manual flush");
 }
 
 void test_storage_file_rotation()
 {
-    deleteAllLogFiles(TEST_FS);
+    fsUtils->deleteAllFiles();
     LOG_SET_STORAGE(TEST_FS);
 
     // Generate enough messages to exceed file size limit (512 bytes)
@@ -236,21 +164,21 @@ void test_storage_file_rotation()
     }
 
     // Should have created rotated files
-    int fileCount = countLogFiles(TEST_FS);
+    int fileCount = fsUtils->countLogFiles(LOG_STORAGE_FILE_PATH);
     TEST_ASSERT_GREATER_THAN_MESSAGE(1, fileCount,
                                      "Should have multiple log files after rotation");
 
     // Check main file exists
-    TEST_ASSERT_TRUE_MESSAGE(TEST_FS.exists(LOG_STORAGE_FILE_PATH), "Main log file should exist");
+    TEST_ASSERT_TRUE_MESSAGE(fsUtils->exists(LOG_STORAGE_FILE_PATH), "Main log file should exist");
 
     // Check at least one rotated file exists
-    bool hasRotated = TEST_FS.exists("/test_log.1.txt");
+    bool hasRotated = fsUtils->exists("/test_log.1.txt");
     TEST_ASSERT_TRUE_MESSAGE(hasRotated, "At least one rotated file should exist");
 }
 
 void test_storage_max_files_limit()
 {
-    deleteAllLogFiles(TEST_FS);
+    fsUtils->deleteAllFiles();
     LOG_SET_STORAGE(TEST_FS);
 
     // Generate many messages to create multiple rotations
@@ -262,19 +190,19 @@ void test_storage_max_files_limit()
     }
 
     // Should not exceed MAX_FILES + 1 (current file + 3 rotated)
-    int fileCount = countLogFiles(TEST_FS);
+    int fileCount = fsUtils->countLogFiles(LOG_STORAGE_FILE_PATH);
     TEST_ASSERT_LESS_OR_EQUAL_MESSAGE(LOG_STORAGE_MAX_FILES + 1, fileCount,
                                       "Should not exceed max files limit");
 
     // File 4 should not exist (beyond max)
-    TEST_ASSERT_FALSE_MESSAGE(TEST_FS.exists("/test_log.4.txt"),
+    TEST_ASSERT_FALSE_MESSAGE(fsUtils->exists("/test_log.4.txt"),
                               "Should not create files beyond max limit");
 }
 
 void test_storage_file_naming()
 {
     LOG_SET_STORAGE(TEST_FS);
-    deleteAllLogFiles(TEST_FS);
+    fsUtils->deleteAllFiles();
 
     // Generate enough content for rotation
     for (int i = 0; i < 25; i++)
@@ -285,11 +213,11 @@ void test_storage_file_naming()
     }
 
     // Check proper naming sequence
-    TEST_ASSERT_TRUE_MESSAGE(TEST_FS.exists(LOG_STORAGE_FILE_PATH), "Main file should exist");
+    TEST_ASSERT_TRUE_MESSAGE(fsUtils->exists(LOG_STORAGE_FILE_PATH), "Main file should exist");
 
-    if (TEST_FS.exists("/test_log.1.txt"))
+    if (fsUtils->exists("/test_log.1.txt"))
     {
-        size_t size1 = getFileSize(TEST_FS, "/test_log.1.txt");
+        size_t size1 = fsUtils->getFileSize("/test_log.1.txt");
         TEST_ASSERT_GREATER_THAN_MESSAGE(0, size1, "Rotated file 1 should have content");
 
         // If .1 exists, it should be near the max size
@@ -300,7 +228,7 @@ void test_storage_file_naming()
 
 void test_storage_empty_logs()
 {
-    deleteAllLogFiles(TEST_FS);
+    fsUtils->deleteAllFiles();
     LOG_SET_STORAGE(TEST_FS);
 
     // Log only non-storage level messages
@@ -311,13 +239,13 @@ void test_storage_empty_logs()
     LOG_FLUSH_STORAGE();
 
     // Should not create file
-    TEST_ASSERT_FALSE_MESSAGE(TEST_FS.exists(LOG_STORAGE_FILE_PATH),
+    TEST_ASSERT_FALSE_MESSAGE(fsUtils->exists(LOG_STORAGE_FILE_PATH),
                               "Should not create file for below-threshold messages");
 }
 
 void test_storage_large_message()
 {
-    deleteAllLogFiles(TEST_FS);
+    fsUtils->deleteAllFiles();
     LOG_SET_STORAGE(TEST_FS);
 
     // Create a large message
@@ -325,14 +253,14 @@ void test_storage_large_message()
     LOG_ERROR("Large message: {}", largePayload.c_str());
     LOG_FLUSH_STORAGE();
 
-    std::string content = readFile(TEST_FS, LOG_STORAGE_FILE_PATH);
+    std::string content = fsUtils->readFile(LOG_STORAGE_FILE_PATH);
     TEST_ASSERT_TRUE_MESSAGE(content.find(largePayload) != std::string::npos,
                              "Large message should be stored correctly");
 }
 
 void test_storage_rotated_files_are_readable()
 {
-    deleteAllLogFiles(TEST_FS);
+    fsUtils->deleteAllFiles();
     LOG_SET_STORAGE(TEST_FS);
 
     // Create enough content to trigger at least one rotation.
@@ -347,27 +275,15 @@ void test_storage_rotated_files_are_readable()
     LOG_FLUSH_STORAGE();
 
     // Main file should exist and be readable.
-    TEST_ASSERT_TRUE_MESSAGE(TEST_FS.exists(LOG_STORAGE_FILE_PATH), "Main log should exist");
-    File mainFile = TEST_FS.open(LOG_STORAGE_FILE_PATH, FILE_READ);
-    TEST_ASSERT_TRUE_MESSAGE(mainFile, "Main log should be openable for reading");
-    if (mainFile)
-    {
-        size_t size = mainFile.size();
-        mainFile.close();
-        TEST_ASSERT_GREATER_THAN_MESSAGE(0, size, "Main log should have content");
-    }
+    TEST_ASSERT_TRUE_MESSAGE(fsUtils->exists(LOG_STORAGE_FILE_PATH), "Main log should exist");
+    size_t mainSize = fsUtils->getFileSize(LOG_STORAGE_FILE_PATH);
+    TEST_ASSERT_GREATER_THAN_MESSAGE(0, mainSize, "Main log should have content");
 
     // At least one rotated file should exist and be readable when rotation happened.
-    if (TEST_FS.exists("/test_log.1.txt"))
+    if (fsUtils->exists("/test_log.1.txt"))
     {
-        File rotated = TEST_FS.open("/test_log.1.txt", FILE_READ);
-        TEST_ASSERT_TRUE_MESSAGE(rotated, "Rotated log should be openable for reading");
-        if (rotated)
-        {
-            size_t size = rotated.size();
-            rotated.close();
-            TEST_ASSERT_GREATER_THAN_MESSAGE(0, size, "Rotated log should have content");
-        }
+        size_t rotatedSize = fsUtils->getFileSize("/test_log.1.txt");
+        TEST_ASSERT_GREATER_THAN_MESSAGE(0, rotatedSize, "Rotated log should have content");
     }
     else
     {
@@ -378,7 +294,7 @@ void test_storage_rotated_files_are_readable()
 
 void test_storage_file_naming_no_extension()
 {
-    deleteAllLogFiles(TEST_FS);
+    fsUtils->deleteAllFiles();
 
     const char *path = "/test_log_noext";
     LOG_SET_STORAGE(TEST_FS, path);
@@ -394,26 +310,20 @@ void test_storage_file_naming_no_extension()
     LOG_FLUSH_STORAGE();
 
     // Base file should exist (it will be recreated after rotation when next written, but we log enough times).
-    TEST_ASSERT_TRUE_MESSAGE(TEST_FS.exists(path), "Base no-ext log file should exist");
+    TEST_ASSERT_TRUE_MESSAGE(fsUtils->exists(path), "Base no-ext log file should exist");
 
     // Rotated file should follow: <name>.1 (no trailing extension)
-    TEST_ASSERT_TRUE_MESSAGE(TEST_FS.exists("/test_log_noext.1"),
+    TEST_ASSERT_TRUE_MESSAGE(fsUtils->exists("/test_log_noext.1"),
                              "Rotated no-ext file should be named /test_log_noext.1");
 
     // Sanity: rotated file should be readable and non-empty
-    File rotated = TEST_FS.open("/test_log_noext.1", FILE_READ);
-    TEST_ASSERT_TRUE_MESSAGE(rotated, "Rotated no-ext file should be openable");
-    if (rotated)
-    {
-        size_t size = rotated.size();
-        rotated.close();
-        TEST_ASSERT_GREATER_THAN_MESSAGE(0, size, "Rotated no-ext file should have content");
-    }
+    size_t rotatedSize = fsUtils->getFileSize("/test_log_noext.1");
+    TEST_ASSERT_GREATER_THAN_MESSAGE(0, rotatedSize, "Rotated no-ext file should have content");
 }
 
 void test_storage_file_naming_multiple_extensions()
 {
-    deleteAllLogFiles(TEST_FS);
+    fsUtils->deleteAllFiles();
 
     // Multiple extensions: last extension should be preserved.
     // FileManager::rotate() splits on the last '.', so expected rotated name is: /log.txt.1.md
@@ -429,23 +339,17 @@ void test_storage_file_naming_multiple_extensions()
 
     LOG_FLUSH_STORAGE();
 
-    TEST_ASSERT_TRUE_MESSAGE(TEST_FS.exists(path), "Base multi-ext log file should exist");
-    TEST_ASSERT_TRUE_MESSAGE(TEST_FS.exists("/log.txt.1.md"),
+    TEST_ASSERT_TRUE_MESSAGE(fsUtils->exists(path), "Base multi-ext log file should exist");
+    TEST_ASSERT_TRUE_MESSAGE(fsUtils->exists("/log.txt.1.md"),
                              "Rotated multi-ext file should be named /log.txt.1.md");
 
     // Ensure we are not rotating as /log.1.txt.md (wrong split point)
-    TEST_ASSERT_FALSE_MESSAGE(TEST_FS.exists("/log.1.txt.md"),
+    TEST_ASSERT_FALSE_MESSAGE(fsUtils->exists("/log.1.txt.md"),
                               "Should not rotate using the first extension segment");
 
     // Sanity: rotated file should be readable and non-empty
-    File rotated = TEST_FS.open("/log.txt.1.md", FILE_READ);
-    TEST_ASSERT_TRUE_MESSAGE(rotated, "Rotated multi-ext file should be openable");
-    if (rotated)
-    {
-        size_t size = rotated.size();
-        rotated.close();
-        TEST_ASSERT_GREATER_THAN_MESSAGE(0, size, "Rotated multi-ext file should have content");
-    }
+    size_t rotatedSize = fsUtils->getFileSize("/log.txt.1.md");
+    TEST_ASSERT_GREATER_THAN_MESSAGE(0, rotatedSize, "Rotated multi-ext file should have content");
 }
 
 void test_storage_file_naming_with_subdirectory()
@@ -454,18 +358,18 @@ void test_storage_file_naming_with_subdirectory()
     TEST_IGNORE_MESSAGE("SPIFFS does not support directories");
 #endif
 
-    deleteAllLogFiles(TEST_FS);
+    fsUtils->deleteAllFiles();
 
     // Create subdirectory
     const char *dir = "/logs";
     const char *path = "/logs/app.txt";
 
     // Ensure directory exists (create if needed)
-    if (!TEST_FS.exists(dir))
+    if (!fsUtils->exists(dir))
     {
-        TEST_FS.mkdir(dir);
+        fsUtils->mkdir(dir);
     }
-    TEST_ASSERT_TRUE_MESSAGE(TEST_FS.exists(dir), "Subdirectory should exist");
+    TEST_ASSERT_TRUE_MESSAGE(fsUtils->exists(dir), "Subdirectory should exist");
 
     LOG_SET_STORAGE(TEST_FS, path);
 
@@ -480,41 +384,35 @@ void test_storage_file_naming_with_subdirectory()
     LOG_FLUSH_STORAGE();
 
     // Base file should exist
-    TEST_ASSERT_TRUE_MESSAGE(TEST_FS.exists(path), "Base file in subdirectory should exist");
+    TEST_ASSERT_TRUE_MESSAGE(fsUtils->exists(path), "Base file in subdirectory should exist");
 
     // Rotated file should be /logs/app.1.txt (not /logs/app.txt.1 or /logs.1/app.txt)
     const char *rotatedPath = "/logs/app.1.txt";
-    TEST_ASSERT_TRUE_MESSAGE(TEST_FS.exists(rotatedPath),
+    TEST_ASSERT_TRUE_MESSAGE(fsUtils->exists(rotatedPath),
                              "Rotated file should be /logs/app.1.txt");
 
     // Sanity: rotated file should be readable and non-empty
-    File rotated = TEST_FS.open(rotatedPath, FILE_READ);
-    TEST_ASSERT_TRUE_MESSAGE(rotated, "Rotated file in subdirectory should be openable");
-    if (rotated)
-    {
-        size_t size = rotated.size();
-        rotated.close();
-        TEST_ASSERT_GREATER_THAN_MESSAGE(0, size, "Rotated file in subdirectory should have content");
-    }
+    size_t rotatedSize = fsUtils->getFileSize(rotatedPath);
+    TEST_ASSERT_GREATER_THAN_MESSAGE(0, rotatedSize, "Rotated file in subdirectory should have content");
 
     // Cleanup subdirectory
-    TEST_FS.remove(path);
-    TEST_FS.remove(rotatedPath);
-    TEST_FS.remove("/logs/app.2.txt");
-    TEST_FS.remove("/logs/app.3.txt");
-    TEST_FS.rmdir(dir);
+    fsUtils->remove(path);
+    fsUtils->remove(rotatedPath);
+    fsUtils->remove("/logs/app.2.txt");
+    fsUtils->remove("/logs/app.3.txt");
+    fsUtils->rmdir(dir);
 }
 
 void test_storage_buffering_real_buffer()
 {
-    deleteAllLogFiles(TEST_FS);
+    fsUtils->deleteAllFiles();
     LOG_SET_STORAGE(TEST_FS);
 
     // Write some initial content and flush
     LOG_WARN("Initial message");
     LOG_FLUSH_STORAGE();
 
-    size_t initialSize = getFileSize(TEST_FS, LOG_STORAGE_FILE_PATH);
+    size_t initialSize = fsUtils->getFileSize(LOG_STORAGE_FILE_PATH);
     TEST_ASSERT_GREATER_THAN_MESSAGE(0, initialSize, "Initial file should have content");
 
     // Write two messages without flushing (should remain in buffer)
@@ -522,18 +420,18 @@ void test_storage_buffering_real_buffer()
     LOG_WARN("Buffered message 2");
 
     // File size should not have increased yet (messages are in buffer)
-    size_t sizeBeforeFlush = getFileSize(TEST_FS, LOG_STORAGE_FILE_PATH);
+    size_t sizeBeforeFlush = fsUtils->getFileSize(LOG_STORAGE_FILE_PATH);
     TEST_ASSERT_EQUAL_MESSAGE(initialSize, sizeBeforeFlush,
                               "File size should not increase before flush (messages in buffer)");
 
     // Flush and verify size increased
     LOG_FLUSH_STORAGE();
-    size_t sizeAfterFlush = getFileSize(TEST_FS, LOG_STORAGE_FILE_PATH);
+    size_t sizeAfterFlush = fsUtils->getFileSize(LOG_STORAGE_FILE_PATH);
     TEST_ASSERT_GREATER_THAN_MESSAGE(sizeBeforeFlush, sizeAfterFlush,
                                      "File size should increase after flushing buffer");
 
     // Verify content is correct
-    std::string content = readFile(TEST_FS, LOG_STORAGE_FILE_PATH);
+    std::string content = fsUtils->readFile(LOG_STORAGE_FILE_PATH);
     TEST_ASSERT_TRUE_MESSAGE(content.find("Buffered message 1") != std::string::npos,
                              "Buffered message 1 should be in file after flush");
     TEST_ASSERT_TRUE_MESSAGE(content.find("Buffered message 2") != std::string::npos,
@@ -542,7 +440,7 @@ void test_storage_buffering_real_buffer()
 
 void test_storage_auto_flush_on_buffer_full()
 {
-    deleteAllLogFiles(TEST_FS);
+    fsUtils->deleteAllFiles();
     LOG_SET_STORAGE(TEST_FS);
 
     // Fill buffer with messages (256 byte limit)
@@ -553,13 +451,13 @@ void test_storage_auto_flush_on_buffer_full()
     }
 
     // Buffer should have auto-flushed, so file should exist and have content
-    size_t size = getFileSize(TEST_FS, LOG_STORAGE_FILE_PATH);
+    size_t size = fsUtils->getFileSize(LOG_STORAGE_FILE_PATH);
     TEST_ASSERT_GREATER_THAN_MESSAGE(0, size, "File should have content after buffer fills and auto-flushes");
 }
 
 void test_storage_message_larger_than_buffer()
 {
-    deleteAllLogFiles(TEST_FS);
+    fsUtils->deleteAllFiles();
     LOG_SET_STORAGE(TEST_FS);
 
     // Create message larger than buffer (256 bytes)
@@ -567,14 +465,14 @@ void test_storage_message_larger_than_buffer()
     LOG_ERROR("Oversized: {}", largePayload.c_str());
     LOG_FLUSH_STORAGE();
 
-    std::string content = readFile(TEST_FS, LOG_STORAGE_FILE_PATH);
+    std::string content = fsUtils->readFile(LOG_STORAGE_FILE_PATH);
     TEST_ASSERT_TRUE_MESSAGE(content.find(largePayload) != std::string::npos,
                              "Message larger than buffer should be written directly to file");
 }
 
 void test_storage_message_larger_than_max_file_size()
 {
-    deleteAllLogFiles(TEST_FS);
+    fsUtils->deleteAllFiles();
     LOG_SET_STORAGE(TEST_FS);
 
     // Create message larger than max file size (512 bytes)
@@ -583,27 +481,27 @@ void test_storage_message_larger_than_max_file_size()
     LOG_FLUSH_STORAGE();
 
     // File should exist and contain the message (oversized first write allowed)
-    TEST_ASSERT_TRUE_MESSAGE(TEST_FS.exists(LOG_STORAGE_FILE_PATH), "File should exist");
+    TEST_ASSERT_TRUE_MESSAGE(fsUtils->exists(LOG_STORAGE_FILE_PATH), "File should exist");
 
-    std::string content = readFile(TEST_FS, LOG_STORAGE_FILE_PATH);
+    std::string content = fsUtils->readFile(LOG_STORAGE_FILE_PATH);
     TEST_ASSERT_TRUE_MESSAGE(content.find(hugePayload) != std::string::npos,
                              "Huge message should be written even if it exceeds max file size");
 
     // File size will exceed max - that's expected for oversized single writes
-    size_t size = getFileSize(TEST_FS, LOG_STORAGE_FILE_PATH);
+    size_t size = fsUtils->getFileSize(LOG_STORAGE_FILE_PATH);
     TEST_ASSERT_GREATER_THAN_MESSAGE(LOG_STORAGE_MAX_FILE_SIZE, size,
                                      "File may exceed max size for oversized single write");
 }
 
 void test_storage_set_file_path_resets_state()
 {
-    deleteAllLogFiles(TEST_FS);
+    fsUtils->deleteAllFiles();
 
     const char *path1 = "/log_path1.txt";
     const char *path2 = "/log_path2.txt";
 
     // Create concrete RotatingFileSink to access setFilePath
-    auto fileManager = std::make_shared<FileManager<decltype(TEST_FS)>>(TEST_FS);
+    auto fileManager = createFileManager(TEST_FS);
     auto sink = std::make_shared<RotatingFileSink<>>(fileManager, path1);
     FormatLog::instance().setStorage(sink);
 
@@ -611,8 +509,8 @@ void test_storage_set_file_path_resets_state()
     LOG_WARN("Message to path 1");
     LOG_FLUSH_STORAGE();
 
-    TEST_ASSERT_TRUE_MESSAGE(TEST_FS.exists(path1), "First path should exist");
-    size_t size1 = getFileSize(TEST_FS, path1);
+    TEST_ASSERT_TRUE_MESSAGE(fsUtils->exists(path1), "First path should exist");
+    size_t size1 = fsUtils->getFileSize(path1);
     TEST_ASSERT_GREATER_THAN_MESSAGE(0, size1, "First path should have content");
 
     // Change path - this should flush pending data and reset state
@@ -622,24 +520,24 @@ void test_storage_set_file_path_resets_state()
     LOG_WARN("Message to path 2");
     LOG_FLUSH_STORAGE();
 
-    TEST_ASSERT_TRUE_MESSAGE(TEST_FS.exists(path2), "Second path should exist");
+    TEST_ASSERT_TRUE_MESSAGE(fsUtils->exists(path2), "Second path should exist");
 
-    std::string content2 = readFile(TEST_FS, path2);
+    std::string content2 = fsUtils->readFile(path2);
     TEST_ASSERT_TRUE_MESSAGE(content2.find("Message to path 2") != std::string::npos,
                              "Second path should contain new message");
 
     // Verify first path still has its original content (wasn't corrupted)
-    std::string content1 = readFile(TEST_FS, path1);
+    std::string content1 = fsUtils->readFile(path1);
     TEST_ASSERT_TRUE_MESSAGE(content1.find("Message to path 1") != std::string::npos,
                              "First path should still have original content");
 }
 
 void test_storage_flush_empty_buffer_no_op()
 {
-    deleteAllLogFiles(TEST_FS);
+    fsUtils->deleteAllFiles();
 
     // Verify cleanup worked
-    TEST_ASSERT_FALSE_MESSAGE(TEST_FS.exists(LOG_STORAGE_FILE_PATH),
+    TEST_ASSERT_FALSE_MESSAGE(fsUtils->exists(LOG_STORAGE_FILE_PATH),
                               "File should not exist after cleanup");
 
     LOG_SET_STORAGE(TEST_FS);
@@ -648,25 +546,25 @@ void test_storage_flush_empty_buffer_no_op()
     LOG_FLUSH_STORAGE();
 
     // File should not be created
-    TEST_ASSERT_FALSE_MESSAGE(TEST_FS.exists(LOG_STORAGE_FILE_PATH),
+    TEST_ASSERT_FALSE_MESSAGE(fsUtils->exists(LOG_STORAGE_FILE_PATH),
                               "Flushing empty buffer should not create file");
 }
 
 void test_storage_multiple_flushes_same_content()
 {
-    deleteAllLogFiles(TEST_FS);
+    fsUtils->deleteAllFiles();
     LOG_SET_STORAGE(TEST_FS);
 
     LOG_WARN("Single message");
     LOG_FLUSH_STORAGE();
 
-    size_t sizeAfterFirst = getFileSize(TEST_FS, LOG_STORAGE_FILE_PATH);
+    size_t sizeAfterFirst = fsUtils->getFileSize(LOG_STORAGE_FILE_PATH);
 
     // Flush again with no new content
     LOG_FLUSH_STORAGE();
     LOG_FLUSH_STORAGE();
 
-    size_t sizeAfterMultiple = getFileSize(TEST_FS, LOG_STORAGE_FILE_PATH);
+    size_t sizeAfterMultiple = fsUtils->getFileSize(LOG_STORAGE_FILE_PATH);
 
     TEST_ASSERT_EQUAL_MESSAGE(sizeAfterFirst, sizeAfterMultiple,
                               "Multiple flushes with no new content should not change file size");
@@ -674,7 +572,7 @@ void test_storage_multiple_flushes_same_content()
 
 void test_storage_write_null_data_returns_false()
 {
-    deleteAllLogFiles(TEST_FS);
+    fsUtils->deleteAllFiles();
 
     auto sink = createStorage(TEST_FS, LOG_STORAGE_FILE_PATH);
 
@@ -689,7 +587,7 @@ void test_storage_write_null_data_returns_false()
 
 void test_storage_rotation_preserves_content_order()
 {
-    deleteAllLogFiles(TEST_FS);
+    fsUtils->deleteAllFiles();
     LOG_SET_STORAGE(TEST_FS);
 
     // Write distinct numbered messages
@@ -701,8 +599,8 @@ void test_storage_rotation_preserves_content_order()
     }
 
     // Read all files and check that lower numbers are in older (higher index) files
-    std::string mainContent = readFile(TEST_FS, LOG_STORAGE_FILE_PATH);
-    std::string rotated1 = readFile(TEST_FS, "/test_log.1.txt");
+    std::string mainContent = fsUtils->readFile(LOG_STORAGE_FILE_PATH);
+    std::string rotated1 = fsUtils->readFile("/test_log.1.txt");
 
     // Main file should have the most recent messages
     // Rotated file should have older messages
@@ -742,14 +640,14 @@ void test_storage_rotation_preserves_content_order()
 
 void test_storage_buffer_boundary_exact_fit()
 {
-    deleteAllLogFiles(TEST_FS);
+    fsUtils->deleteAllFiles();
     LOG_SET_STORAGE(TEST_FS);
 
     // Write initial content
     LOG_WARN("Initial");
     LOG_FLUSH_STORAGE();
 
-    size_t initialSize = getFileSize(TEST_FS, LOG_STORAGE_FILE_PATH);
+    size_t initialSize = fsUtils->getFileSize(LOG_STORAGE_FILE_PATH);
 
     // Try to write exactly at buffer boundary
     // Buffer is 256 bytes, write something that should just fit
@@ -757,20 +655,20 @@ void test_storage_buffer_boundary_exact_fit()
     LOG_WARN("{}", nearLimit.c_str());
 
     // Should still be buffered (not auto-flushed yet)
-    size_t sizeBeforeFlush = getFileSize(TEST_FS, LOG_STORAGE_FILE_PATH);
+    size_t sizeBeforeFlush = fsUtils->getFileSize(LOG_STORAGE_FILE_PATH);
     TEST_ASSERT_EQUAL_MESSAGE(initialSize, sizeBeforeFlush,
                               "Content near buffer limit should still be buffered");
 
     LOG_FLUSH_STORAGE();
 
-    size_t sizeAfterFlush = getFileSize(TEST_FS, LOG_STORAGE_FILE_PATH);
+    size_t sizeAfterFlush = fsUtils->getFileSize(LOG_STORAGE_FILE_PATH);
     TEST_ASSERT_GREATER_THAN_MESSAGE(initialSize, sizeAfterFlush,
                                      "Content should be written after flush");
 }
 
 void test_storage_buffer_overflow_and_file_rotation()
 {
-    deleteAllLogFiles(TEST_FS);
+    fsUtils->deleteAllFiles();
     LOG_SET_STORAGE(TEST_FS);
 
     // Scenario: Buffer is nearly full, file is nearly full
@@ -783,7 +681,7 @@ void test_storage_buffer_overflow_and_file_rotation()
         LOG_FLUSH_STORAGE();
     }
 
-    size_t fileSize = getFileSize(TEST_FS, LOG_STORAGE_FILE_PATH);
+    size_t fileSize = fsUtils->getFileSize(LOG_STORAGE_FILE_PATH);
     TEST_ASSERT_GREATER_THAN_MESSAGE(250, fileSize, "File should be substantially filled");
     TEST_ASSERT_LESS_THAN_MESSAGE(LOG_STORAGE_MAX_FILE_SIZE, fileSize, "File should not be at max yet");
 
@@ -792,7 +690,7 @@ void test_storage_buffer_overflow_and_file_rotation()
     LOG_WARN("{}", bufferFill.c_str());
 
     // File size should not change yet (data is buffered)
-    size_t fileSizeBeforeOverflow = getFileSize(TEST_FS, LOG_STORAGE_FILE_PATH);
+    size_t fileSizeBeforeOverflow = fsUtils->getFileSize(LOG_STORAGE_FILE_PATH);
     TEST_ASSERT_EQUAL_MESSAGE(fileSize, fileSizeBeforeOverflow, "File should not grow (data buffered)");
 
     // Now write a message that will:
@@ -806,21 +704,21 @@ void test_storage_buffer_overflow_and_file_rotation()
 
     // After flush, we should have rotated
     // Check that rotation occurred
-    bool rotatedFileExists = TEST_FS.exists("/test_log.1.txt");
+    bool rotatedFileExists = fsUtils->exists("/test_log.1.txt");
     TEST_ASSERT_TRUE_MESSAGE(rotatedFileExists, "Rotated file should exist");
 
     // Main file should be small (just the last message)
-    size_t newMainFileSize = getFileSize(TEST_FS, LOG_STORAGE_FILE_PATH);
+    size_t newMainFileSize = fsUtils->getFileSize(LOG_STORAGE_FILE_PATH);
     TEST_ASSERT_LESS_THAN_MESSAGE(200, newMainFileSize, "New main file should be small");
 
     // Rotated file should have the old content
-    size_t rotatedFileSize = getFileSize(TEST_FS, "/test_log.1.txt");
+    size_t rotatedFileSize = fsUtils->getFileSize("/test_log.1.txt");
     TEST_ASSERT_GREATER_THAN_MESSAGE(400, rotatedFileSize, "Rotated file should have substantial content");
 }
 
 void test_storage_oversized_message_with_file_rotation()
 {
-    deleteAllLogFiles(TEST_FS);
+    fsUtils->deleteAllFiles();
     LOG_SET_STORAGE(TEST_FS);
 
     // Scenario: File is moderately full, oversized message would exceed file size
@@ -831,7 +729,7 @@ void test_storage_oversized_message_with_file_rotation()
         LOG_FLUSH_STORAGE();
     }
 
-    size_t initialFileSize = getFileSize(TEST_FS, LOG_STORAGE_FILE_PATH);
+    size_t initialFileSize = fsUtils->getFileSize(LOG_STORAGE_FILE_PATH);
     TEST_ASSERT_GREATER_THAN_MESSAGE(200, initialFileSize, "File should be partially filled");
     TEST_ASSERT_LESS_THAN_MESSAGE(LOG_STORAGE_MAX_FILE_SIZE, initialFileSize, "File should be under max");
 
@@ -850,20 +748,20 @@ void test_storage_oversized_message_with_file_rotation()
     LOG_FLUSH_STORAGE();
 
     // Check that rotation occurred
-    bool rotatedExists = TEST_FS.exists("/test_log.1.txt");
+    bool rotatedExists = fsUtils->exists("/test_log.1.txt");
     TEST_ASSERT_TRUE_MESSAGE(rotatedExists, "Rotation should have occurred");
 
     // Rotated file should have the initial content + buffered data
-    size_t rotatedSize = getFileSize(TEST_FS, "/test_log.1.txt");
+    size_t rotatedSize = fsUtils->getFileSize("/test_log.1.txt");
     TEST_ASSERT_GREATER_THAN_MESSAGE(initialFileSize, rotatedSize, "Rotated file should have initial + buffered content");
 
     // Main file should have the oversized message
-    size_t mainFileSize = getFileSize(TEST_FS, LOG_STORAGE_FILE_PATH);
+    size_t mainFileSize = fsUtils->getFileSize(LOG_STORAGE_FILE_PATH);
     TEST_ASSERT_GREATER_THAN_MESSAGE(300, mainFileSize, "Main file should have oversized message");
     TEST_ASSERT_LESS_THAN_MESSAGE(LOG_STORAGE_MAX_FILE_SIZE, mainFileSize, "Oversized message should fit in fresh file");
 
     // Verify content
-    std::string mainContent = readFile(TEST_FS, LOG_STORAGE_FILE_PATH);
+    std::string mainContent = fsUtils->readFile(LOG_STORAGE_FILE_PATH);
     TEST_ASSERT_TRUE_MESSAGE(mainContent.find(oversizedMsg) != std::string::npos,
                              "Main file should contain the oversized message");
 }
@@ -883,7 +781,7 @@ void tearDown()
     // Flush any remaining buffered data before cleanup
     LOG_FLUSH_STORAGE();
     // Clean up after each test
-    deleteAllLogFiles(TEST_FS);
+    fsUtils->deleteAllFiles();
 }
 
 void tests()
@@ -938,13 +836,9 @@ void setup()
 #ifdef TEST_FS_SDFAT
 
     SPI.begin();
-    if (!TEST_FS.begin(SdSpiConfig(SS, DEDICATED_SPI, SD_SCK_MHZ(16))))
+    if (!TEST_FS.begin(SS))
     {
         TEST_FAIL_MESSAGE(TEST_FS_NAME " initialization failed");
-    }
-    if (!TEST_FS.volumeBegin())
-    {
-        TEST_FAIL_MESSAGE(TEST_FS_NAME " format failed");
     }
 #elif defined(TEST_FS_SD)
     SPI.begin();
@@ -959,7 +853,12 @@ void setup()
     }
 #endif
 
-    deleteAllLogFiles(TEST_FS);
+#ifdef TEST_FS_SDFAT
+    fsUtils = std::make_shared<SdFatFileSystemUtils<decltype(TEST_FS)>>(TEST_FS);
+#else
+    fsUtils = std::make_shared<Esp32FileSystemUtils<decltype(TEST_FS)>>(TEST_FS);
+#endif
+    fsUtils->deleteAllFiles();
 
     UNITY_BEGIN();
     tests();
