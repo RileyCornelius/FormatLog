@@ -12,7 +12,7 @@ public:
     virtual size_t write(const char *data, size_t size) = 0;
     virtual void flush() = 0;
     virtual void close() = 0;
-    virtual size_t size() const = 0;
+    virtual size_t size() = 0;
     virtual const char *filePath() = 0;
     virtual bool exists(const char *filePath) = 0;
     virtual bool remove(const char *filePath) = 0;

@@ -3,14 +3,14 @@
 #include <memory>
 #include "Config/Settings.h"
 #include "Storage/Sinks/IFileSink.h"
-#include "Storage/FileSystem/FileManager.h"
+#include "Storage/FileSystem/FileManagerFactory.h"
 #include "Storage/Sinks/RotatingFileSink.h"
 
 /**
- * Factory function to create a storage sink with rotating file and external buffering.
+ * Factory function to create a storage sink with rotating file and buffering.
  *
- * Rotation: Set LOG_STORAGE_MAX_FILES = 0 for single file (no backups, default = 3)
- * Buffer size: Specify BufferSize template parameter or use LOG_STORAGE_MAX_BUFFER_SIZE default (4096)
+ * Rotation: Set maxFiles = 0 for single file (no backups, default = 3)
+ * Buffer size: Specify BufferSize template parameter or use LOG_STORAGE_MAX_BUFFER_SIZE default, if set to 0 no buffering is used
  *
  * @tparam TFileSystem Filesystem type (SPIFFS, LittleFS, SD, SdFat)
  * @tparam BufferSize Size of the internal memory buffer (default = LOG_STORAGE_MAX_BUFFER_SIZE)
@@ -28,6 +28,6 @@ std::shared_ptr<IFileSink> createStorage(TFileSystem &fs,
                                          size_t maxFileSize = LOG_STORAGE_MAX_FILE_SIZE,
                                          bool rotateOnInit = LOG_STORAGE_NEW_FILE_ON_BOOT)
 {
-    auto fileManager = std::make_shared<FileManager<TFileSystem>>(fs);
+    auto fileManager = createFileManager(fs);
     return std::make_shared<RotatingFileSink<BufferSize>>(fileManager, filePath, maxFiles, maxFileSize, rotateOnInit);
 }

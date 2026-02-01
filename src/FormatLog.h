@@ -347,6 +347,10 @@ public:
  *-------------------------------------------------------------------------------------*/
 
 #if LOG_ASSERT_ENABLE
+/**
+ * @param condition Condition to assert (true = pass, false = fail)
+ * @param message (Optional) message to log on assertion failure
+ */
 #define ASSERT(condition, ...) FormatLog::instance().assertion(!!(condition), __FILE__, __LINE__, __FUNCTION__, #condition, ##__VA_ARGS__)
 #define LOG_SET_PANIC_HANDLER(handler) FormatLog::instance().setPanicHandler(handler)
 #else
@@ -356,13 +360,11 @@ public:
 
 #if LOG_STORAGE_ENABLE
 /**
- * Configure storage with rotating file sink and external buffering.
- *
- * Buffer size: Set LOG_STORAGE_MAX_BUFFER_SIZE to control memory buffer size (default = 4096)
- * Rotation: Set LOG_STORAGE_MAX_FILES = 0 for single file (no backups, default = 3)
- *
- * @param fs Reference to the file system (SPIFFS, LittleFS, SD, SdFat)
- * @param ... Optional: filePath, maxFiles, maxFileSize, rotateOnInit
+ * @param fs Reference to the file system
+ * @param filePath (optional) Path to the log file
+ * @param maxFiles (optional) Maximum number of rotated files to keep (eg. "3" keeps .1, .2, .3, main file)
+ * @param maxFileSize (optional) Maximum size of each log file before rotation
+ * @param rotateOnInit (optional) Whether to rotate the existing log file on initialization
  */
 #define LOG_SET_STORAGE(fs, ...) FormatLog::instance().setStorage(createStorage(fs, ##__VA_ARGS__))
 #define LOG_SET_STORAGE_LOG_LEVEL(level) FormatLog::instance().setStorageLogLevel(level)

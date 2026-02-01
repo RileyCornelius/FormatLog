@@ -1,77 +1,68 @@
 #pragma once
 
 #include "IFileManager.h"
-#include "FileManagerTraits.h"
 #include <string>
 
 template <typename TFileSystem>
-class FileManager : public IFileManager
+class Esp32FileManager : public IFileManager
 {
 private:
-    using TFile = typename FileTypeDeducer<TFileSystem>::type;
-    using TAppendMode = typename AppendModeDeducer<TFileSystem>::type;
+    using TFile = decltype(std::declval<TFileSystem>().open(""));
 
     TFileSystem &_fs;
-    TFile file;
+    TFile _file;
     std::string _filePath;
 
 public:
-    FileManager(TFileSystem &fs) : _fs(fs) {}
+    Esp32FileManager(TFileSystem &fs) : _fs(fs) {}
 
     bool open(const char *filePath) override
     {
         close();
         _filePath = filePath;
-        file = _fs.open(filePath, AppendModeDeducer<TFileSystem>::defaultValue());
+        _file = _fs.open(filePath, "a");
 
-        return file ? true : false;
-    }
-
-    bool open(const std::string &filePath)
-    {
-        return open(filePath.c_str());
+        return _file ? true : false;
     }
 
     bool isOpen() const override
     {
-        return file ? true : false;
+        return _file ? true : false;
     }
 
     size_t write(const char *data, size_t size) override
     {
-        if (!file || size == 0)
+        if (!_file || size == 0)
         {
             return 0;
         }
 
-        size_t written = file.write(reinterpret_cast<const uint8_t *>(data), size);
-
-        return written;
+        return _file.write(reinterpret_cast<const uint8_t *>(data), size);
     }
 
     void flush() override
     {
-        if (file)
+        if (_file)
         {
-            file.flush();
+            _file.flush();
         }
     }
 
     void close() override
     {
-        if (file)
+        if (_file)
         {
-            file.close();
+            _file.close();
         }
     }
 
-    size_t size() const override
+    size_t size() override
     {
-        if (!file)
+        if (!_file)
         {
             return 0;
         }
-        return file.size();
+        return _file.size();
     }
 
     const char *filePath() override
