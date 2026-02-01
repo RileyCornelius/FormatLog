@@ -7,9 +7,9 @@ namespace preamble
     const char *logLevelText(LogLevel level, LogLevelTextFormat format)
     {
         static const char *logLevelTexts[3][6] = {
-            {"", "E", "W", "I", "D", "T"},                      // LogLevelTextFormat::LETTER
-            {"", "EROR", "WARN", "INFO", "DBUG", "TRAC"},       // LogLevelTextFormat::SHORT
-            {"", "ERROR", "WARN", "INFO", "DEBUG", "TRACE"}     // LogLevelTextFormat::FULL
+            {"", "E", "W", "I", "D", "T"},                  // LogLevelTextFormat::LETTER
+            {"", "EROR", "WARN", "INFO", "DBUG", "TRAC"},   // LogLevelTextFormat::SHORT
+            {"", "ERROR", "WARN", "INFO", "DEBUG", "TRACE"} // LogLevelTextFormat::FULL
         };
 
         return logLevelTexts[(static_cast<int>(format))][static_cast<int>(level)];
@@ -41,7 +41,7 @@ namespace preamble
             }
             else
             {
-                sprintf(timeFormat, "LOCALTIME_ERROR");
+                sprintf(timeFormat, "");
             }
         }
         else if (format == LogTime::HHHHMMSSMS)
