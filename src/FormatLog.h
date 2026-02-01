@@ -122,6 +122,12 @@ public:
             storage->flush();
     }
 
+    void closeStorage()
+    {
+        if (storage)
+            storage->close();
+    }
+
     void setStorageFilePath(const char *path)
     {
         if (storage)
@@ -370,6 +376,7 @@ public:
 #define LOG_SET_STORAGE_LOG_LEVEL(level) FormatLog::instance().setStorageLogLevel(level)
 #define LOG_GET_STORAGE_LOG_LEVEL() FormatLog::instance().getStorageLogLevel()
 #define LOG_FLUSH_STORAGE() FormatLog::instance().flushStorage()
+#define LOG_CLOSE_STORAGE() FormatLog::instance().closeStorage()
 #define LOG_SET_STORAGE_FILE_PATH(path) FormatLog::instance().setStorageFilePath(path)
 #define LOG_GET_STORAGE_FILE_PATH() FormatLog::instance().getStorageFilePath()
 #else
@@ -377,6 +384,7 @@ public:
 #define LOG_SET_STORAGE_LOG_LEVEL(level)
 #define LOG_GET_STORAGE_LOG_LEVEL() LogLevel::DISABLE
 #define LOG_FLUSH_STORAGE()
+#define LOG_CLOSE_STORAGE()
 #define LOG_SET_STORAGE_FILE_PATH(path)
 #define LOG_GET_STORAGE_FILE_PATH() std::string("")
 #endif // LOG_STORAGE_ENABLE
