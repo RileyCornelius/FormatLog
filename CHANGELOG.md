@@ -22,7 +22,6 @@
 
 - `FmtLog.h` now lists all available settings with defaults and uses `#ifndef` guards for overridability
 - `LOG_STORAGE_ENABLE` default changed to `0` (disabled by default)
-
 - `LOG_PRINT`/`LOG_PRINTLN` macros now gated by `LOG_PRINT_ENABLE` instead of `LOG_LEVEL`
 - Moved all library types into `fmtlog` namespace (FormatLog, SourceLocation, enums, storage classes, benchmark/stopwatch classes, preamble functions)
 - Removed file extension from filename preamble (e.g. `main` instead of `main.cpp`)

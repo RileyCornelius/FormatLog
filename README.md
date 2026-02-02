@@ -1,6 +1,6 @@
 # FormatLog
 
-> A modern logging library for Arduino projects using {fmt} library
+> A modern logging library using {fmt} library for Arduino.
 
 ## Features
 
