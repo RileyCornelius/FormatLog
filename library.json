@@ -24,6 +24,8 @@
             "test",
             "scripts",
             "platformio.ini",
+            "CHANGELOG.md",
+            "CLAUDE.md",
             ".gitignore",
             ".github"
         ]
