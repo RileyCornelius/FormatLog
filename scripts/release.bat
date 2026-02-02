@@ -102,6 +102,11 @@ if errorlevel 1 (
 del "%NOTES_FILE%" 2>nul
 del "%ZIP_FILE%" 2>nul
 
+:: Publish to PlatformIO registry
+echo Publishing to PlatformIO registry...
+pio pkg publish --no-interactive
+if errorlevel 1 exit /b 1
+
 echo.
 echo Release v%VERSION% created successfully!
 echo https://github.com/RileyCornelius/FormatLog/releases/tag/%TAG%
