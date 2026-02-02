@@ -86,7 +86,7 @@ inline void _logPanic()
 #endif
 
 #ifndef LOG_STORAGE_ENABLE
-#define LOG_STORAGE_ENABLE 1
+#define LOG_STORAGE_ENABLE 0
 #endif
 
 #if LOG_STORAGE_ENABLE

@@ -417,7 +417,7 @@ inline void _logBenchmarkCallback(const char *label, uint32_t elapsedMs)
  * @brief Creates a Stopwatch instance for manual timing.
  * Use elapsedMs() for milliseconds or elapsedTime() for HH:MM:SS:MS format.
  */
-#define LOG_STOPWATCH() fmtlog::Stopwatch()
+#define LOG_CREATE_STOPWATCH() fmtlog::Stopwatch()
 
 /**--------------------------------------------------------------------------------------
  * Assert Macros
