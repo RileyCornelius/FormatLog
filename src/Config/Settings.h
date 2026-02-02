@@ -56,6 +56,18 @@
 #define LOG_CHECK_FORMAT "[CHECK] ({}) {}" // [CHECK] ({expr}) {message}
 #endif
 
+#ifndef LOG_BENCHMARK_FORMAT
+#define LOG_BENCHMARK_FORMAT "[{}] elapsed {} ms" // [BENCH] {tag} elapsed {ms}ms
+#endif
+
+#ifndef LOG_BENCHMARK_MICRO_FORMAT
+#define LOG_BENCHMARK_MICRO_FORMAT "[{}] elapsed {} us"
+#endif
+
+#ifndef LOG_BENCHMARK_LOG
+#define LOG_BENCHMARK_LOG LOG_DEBUG // Log macro used for benchmark output
+#endif
+
 #ifndef LOG_PANIC_HANDLER
 inline void _logPanic()
 {
@@ -151,7 +163,7 @@ static_assert(LOG_STORAGE_NEW_FILE_ON_BOOT == 0 || LOG_STORAGE_NEW_FILE_ON_BOOT 
  *-------------------------------------------------------------------------------------*/
 
 #if LOG_COLOR
-#define APPEND_COLOR(buf, level) buf.append(fmt::string_view(preamble::colorText(level)));
+#define APPEND_COLOR(buf, level) buf.append(fmt::string_view(fmtlog::colorText(level)));
 #define APPEND_RESET_COLOR(buf) buf.append(fmt::string_view(COLOR_RESET));
 #else
 #define APPEND_COLOR(buf, level)
@@ -160,7 +172,7 @@ static_assert(LOG_STORAGE_NEW_FILE_ON_BOOT == 0 || LOG_STORAGE_NEW_FILE_ON_BOOT 
 
 #if LOG_TIME != LOG_TIME_DISABLE
 #define PREAMBLE_TIME_FORMAT LOG_FORMATTER
-#define PREAMBLE_TIME(format) preamble::formatTime(static_cast<LogTime>(format)),
+#define PREAMBLE_TIME(format) fmtlog::formatTime(static_cast<LogTime>(format)),
 #else
 #define PREAMBLE_TIME_FORMAT
 #define PREAMBLE_TIME(format)
@@ -168,13 +180,13 @@ static_assert(LOG_STORAGE_NEW_FILE_ON_BOOT == 0 || LOG_STORAGE_NEW_FILE_ON_BOOT 
 
 #if LOG_FILENAME != LOG_FILENAME_DISABLE
 #define PREAMBLE_FILENAME_FORMAT LOG_FORMATTER
-#define PREAMBLE_FILENAME(file, line, func, format) , preamble::formatFilename(file, line, func, static_cast<LogFilename>(format))
+#define PREAMBLE_FILENAME(file, line, func, format) , fmtlog::formatFilename(file, line, func, static_cast<LogFilename>(format))
 #else
 #define PREAMBLE_FILENAME_FORMAT
 #define PREAMBLE_FILENAME(file, line, func, format)
 #endif
 
-#define PREAMBLE_LOG_LEVEL(level, format) preamble::logLevelText(level, static_cast<LogLevelTextFormat>(format))
+#define PREAMBLE_LOG_LEVEL(level, format) fmtlog::logLevelText(level, static_cast<LogLevelTextFormat>(format))
 
 /**--------------------------------------------------------------------------------------
  * Default Preamble

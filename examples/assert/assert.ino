@@ -19,7 +19,7 @@ void panic()
 
 int divide(int a, int b)
 {
-    // Logs a warning and returns 0 if the condition fails
+    // Logs a warning and returns -1 if the condition fails
     CHECK_OR_RETURN_VALUE(b != 0, -1, "Division by zero");
     return a / b;
 }

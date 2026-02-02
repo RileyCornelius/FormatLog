@@ -3,7 +3,8 @@
 #include <Arduino.h>
 #include <memory>
 #include "Config/Settings.h"
-#include "FmtLib.h"
+#include "Benchmark/Benchmark.h"
+#include "fmt.h"
 
 #if LOG_STORAGE_ENABLE
 #include "Storage/StorageFactory.h"
@@ -307,7 +308,7 @@ public:
     }
 };
 
-/**--------------------------------------------------------------------------------------
+/**------------------------------------------------------------------------------
  * Logger Log Macros
  *-------------------------------------------------------------------------------------*/
 
@@ -364,6 +365,64 @@ public:
 #endif
 
 /**--------------------------------------------------------------------------------------
+ * Benchmark
+ *-------------------------------------------------------------------------------------*/
+
+#ifndef _LOG_CONCAT
+#define _LOG_CONCAT(x, y) _LOG_CONCAT_IMPL(x, y)
+#define _LOG_CONCAT_IMPL(x, y) x##y
+#endif
+
+inline void _logBenchmarkCallback(const char *label, uint32_t elapsedMs)
+{
+    LOG_BENCHMARK_LOG(LOG_BENCHMARK_FORMAT, label, elapsedMs);
+}
+
+/**
+ * @brief Logs elapsed time when the current scope exits.
+ * Uses the enclosing function name as the tag.
+ */
+#define LOG_BENCHMARK() fmtlog::ScopedBenchmark _scoped_bench_(__FUNCTION__, _logBenchmarkCallback)
+
+/**
+ * @brief Starts a named benchmark timer. Pair with LOG_BENCHMARK_END().
+ * Multiple BEGIN/END pairs are supported per scope using different labels.
+ *
+ * @param label Label must be a symbol (not a string)
+ */
+#define LOG_BENCHMARK_BEGIN(label) _LOG_BENCHMARK_BEGIN(_LOG_CONCAT(_bench_, label), #label)
+#define _LOG_BENCHMARK_BEGIN(var, label) fmtlog::Benchmark var(label);
+
+/**
+ * @brief Logs elapsed time since the matching LOG_BENCHMARK_BEGIN().
+ * @param label Symbol matching the LOG_BENCHMARK_BEGIN() call
+ */
+#define LOG_BENCHMARK_END(label) _LOG_BENCHMARK_END(_LOG_CONCAT(_bench_, label))
+#define _LOG_BENCHMARK_END(var) LOG_BENCHMARK_LOG(LOG_BENCHMARK_FORMAT, var.label(), var.elapsedMs())
+
+/**
+ * @brief Starts a named microsecond benchmark timer. Pair with LOG_BENCHMARK_MICRO_END().
+ * Multiple BEGIN/END pairs are supported per scope using different labels.
+ *
+ * @param label Label must be a symbol (not a string)
+ */
+#define LOG_BENCHMARK_MICRO_BEGIN(label) _LOG_BENCHMARK_MICRO_BEGIN(_LOG_CONCAT(_ubench_, label), #label)
+#define _LOG_BENCHMARK_MICRO_BEGIN(var, label) fmtlog::MicroBenchmark var(label);
+
+/**
+ * @brief Logs elapsed microseconds since the matching LOG_BENCHMARK_MICRO_BEGIN().
+ * @param label Symbol matching the LOG_BENCHMARK_MICRO_BEGIN() call
+ */
+#define LOG_BENCHMARK_MICRO_END(label) _LOG_BENCHMARK_MICRO_END(_LOG_CONCAT(_ubench_, label))
+#define _LOG_BENCHMARK_MICRO_END(var) LOG_BENCHMARK_LOG(LOG_BENCHMARK_MICRO_FORMAT, var.label(), var.elapsedUs())
+
+/**
+ * @brief Creates a Stopwatch instance for manual timing.
+ * Use elapsedMs() for milliseconds or elapsedTime() for HH:MM:SS:MS format.
+ */
+#define LOG_STOPWATCH() fmtlog::Stopwatch()
+
+/**--------------------------------------------------------------------------------------
  * Assert Macros
  *-------------------------------------------------------------------------------------*/
 
@@ -381,13 +440,13 @@ public:
  * @param condition Condition to check (true = pass, false = fail)
  * @param message (Optional) message to log on failure
  */
-#define CHECK_OR_RETURN(condition, ...)                                                                    \
-    {                                                                                                      \
-        if (!(condition))                                                                                  \
-        {                                                                                                  \
+#define CHECK_OR_RETURN(condition, ...)                                  \
+    {                                                                    \
+        if (!(condition))                                                \
+        {                                                                \
             FormatLog::instance().checkedLog(#condition, ##__VA_ARGS__); \
-            return;                                                    \
-        }                                                              \
+            return;                                                      \
+        }                                                                \
     }
 /**
  * @brief Checks a condition and returns a value from the calling function if it fails.
@@ -396,13 +455,13 @@ public:
  * @param value Value to return on failure
  * @param message (Optional) message to log on failure
  */
-#define CHECK_OR_RETURN_VALUE(condition, value, ...)                    \
-    {                                                                  \
-        if (!(condition))                                              \
-        {                                                              \
+#define CHECK_OR_RETURN_VALUE(condition, value, ...)                     \
+    {                                                                    \
+        if (!(condition))                                                \
+        {                                                                \
             FormatLog::instance().checkedLog(#condition, ##__VA_ARGS__); \
-            return (value);                                            \
-        }                                                                                                  \
+            return (value);                                              \
+        }                                                                \
     }
 
 #define LOG_SET_PANIC_HANDLER(handler) FormatLog::instance().setPanicHandler(handler)
@@ -423,6 +482,8 @@ public:
 
 #if LOG_STORAGE_ENABLE
 /**
+ * @brief Sets up log storage with a rotating file sink. Use SPIFFS, LittleFS, SD, or SdFat.
+ *
  * @param fs Reference to the file system
  * @param filePath (Optional) Path to the log file
  * @param maxFiles (Optional) Maximum number of rotated files to keep (eg. "3" keeps .1, .2, .3, main file)

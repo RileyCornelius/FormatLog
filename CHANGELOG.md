@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.6.1] - unreleased
+
+### Added
+
+- `CHECK_OR_RETURN` and `CHECK_OR_RETURN_VALUE` macros for non-fatal condition checks that log and return
+- `LOG_CHECK_FORMAT` compile-time setting for customizing CHECK output format
+- `LOG_BENCHMARK()` macro for automatic scoped timing that logs elapsed time when the function returns
+- `LOG_BENCHMARK_BEGIN(label)` / `LOG_BENCHMARK_END(label)` macros for timing named sections within a scope
+- `LOG_STOPWATCH()` macro for manual stopwatch timing with `elapsedMs()` and `elapsedTime()`
+- `Stopwatch` class for millisecond-precision timing
+- `MicroStopwatch` class for microsecond-precision timing with `elapsedUs()`, `elapsedMs()`, and `elapsedTime()`
+- `LOG_BENCHMARK_LOG` compile-time setting to configure which log macro benchmark output uses (default: `LOG_DEBUG`)
+- `LOG_BENCHMARK_FORMAT` compile-time setting to customize benchmark output format
+- `LOG_BENCHMARK_MICRO_BEGIN(label)` / `LOG_BENCHMARK_MICRO_END(label)` macros for microsecond-precision named sections
+- `LOG_BENCHMARK_MICRO_FORMAT` compile-time setting to customize micro benchmark output format
+- Benchmark example
+
+### Changed
+
+- Moved `Stopwatch`, `MicroStopwatch`, `Benchmark`, `ScopedBenchmark`, and preamble functions into `fmtlog` namespace
+- Removed file extension from filename preamble (e.g. `main` instead of `main.cpp`)
+- Fixed LittleFS test failures caused by open file descriptors during cleanup
+
+
 ## [0.6.0] - 2026-02-01
 
 ### Added
