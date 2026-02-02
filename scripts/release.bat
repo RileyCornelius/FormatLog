@@ -1,0 +1,107 @@
+@echo off
+setlocal enabledelayedexpansion
+
+:: Release script for FormatLog
+:: Usage: scripts\release.bat <version>
+:: Example: scripts\release.bat 0.6.0
+
+set "VERSION=%~1"
+
+if "%VERSION%"=="" (
+    echo Usage: scripts\release.bat ^<version^>
+    echo Example: scripts\release.bat 0.6.0
+    exit /b 1
+)
+
+set "TAG=%VERSION%"
+
+:: Check for uncommitted changes
+for /f "delims=" %%i in ('git status --porcelain') do (
+    echo Error: Working directory has uncommitted changes. Commit or stash them first.
+    exit /b 1
+)
+
+:: Check we are on main branch
+for /f "delims=" %%i in ('git branch --show-current') do set "BRANCH=%%i"
+if not "%BRANCH%"=="main" (
+    echo Error: Must be on main branch ^(currently on '%BRANCH%'^)
+    exit /b 1
+)
+
+:: Check tag doesn't already exist
+git rev-parse "%TAG%" >nul 2>&1
+if not errorlevel 1 (
+    echo Error: Tag %TAG% already exists
+    exit /b 1
+)
+
+:: Update version in library.json and library.properties
+echo Updating version to %VERSION%...
+powershell -Command "(Get-Content library.json) -replace '\"version\": \".*\"', '\"version\": \"%VERSION%\"' | Set-Content library.json"
+powershell -Command "(Get-Content library.properties) -replace '^version=.*', 'version=%VERSION%' | Set-Content library.properties"
+
+:: Update changelog date
+for /f "delims=" %%i in ('powershell -Command "Get-Date -Format yyyy-MM-dd"') do set "TODAY=%%i"
+echo Updating CHANGELOG.md date to %TODAY%...
+powershell -Command "(Get-Content CHANGELOG.md) -replace '## \[%VERSION%\] - Unreleased', '## [%VERSION%] - %TODAY%' | Set-Content CHANGELOG.md"
+
+:: Commit, tag, and push
+echo Committing version bump...
+git add library.json library.properties CHANGELOG.md
+git commit -m "Release v%VERSION%"
+if errorlevel 1 exit /b 1
+
+git tag "%TAG%"
+
+echo Pushing to origin...
+git push origin main
+if errorlevel 1 exit /b 1
+
+git push origin "%TAG%"
+if errorlevel 1 exit /b 1
+
+:: Package library with pio and convert to zip
+echo Packaging library...
+set "TAR_FILE=FormatLog-%VERSION%.tar.gz"
+set "ZIP_FILE=FormatLog-%VERSION%.zip"
+pio pkg pack -o "%TAR_FILE%"
+if errorlevel 1 exit /b 1
+
+powershell -Command ^
+    "$tar = '%TAR_FILE%'; " ^
+    "$zip = '%ZIP_FILE%'; " ^
+    "$tmp = New-Item -ItemType Directory -Path (Join-Path $env:TEMP ('pio_pack_' + [guid]::NewGuid().ToString('N'))); " ^
+    "tar -xzf $tar -C $tmp.FullName; " ^
+    "Compress-Archive -Path (Join-Path $tmp.FullName '*') -DestinationPath $zip -Force; " ^
+    "Remove-Item $tmp.FullName -Recurse -Force"
+if errorlevel 1 exit /b 1
+
+del "%TAR_FILE%" 2>nul
+
+:: Extract release notes from CHANGELOG.md
+set "NOTES_FILE=%TEMP%\release_notes.tmp"
+powershell -Command ^
+    "$lines = Get-Content CHANGELOG.md; " ^
+    "$found = $false; " ^
+    "$notes = @(); " ^
+    "foreach ($line in $lines) { " ^
+    "  if ($line -match '## \[%VERSION%\]') { $found = $true; continue } " ^
+    "  if ($found -and $line -match '^## \[') { break } " ^
+    "  if ($found) { $notes += $line } " ^
+    "} " ^
+    "$notes | Set-Content '%NOTES_FILE%'"
+
+echo Creating GitHub release %TAG%...
+gh release create "%TAG%" --title "v%VERSION%" --notes-file "%NOTES_FILE%" "%ZIP_FILE%"
+if errorlevel 1 (
+    del "%NOTES_FILE%" 2>nul
+    del "%ZIP_FILE%" 2>nul
+    exit /b 1
+)
+
+del "%NOTES_FILE%" 2>nul
+del "%ZIP_FILE%" 2>nul
+
+echo.
+echo Release v%VERSION% created successfully!
+echo https://github.com/RileyCornelius/FormatLog/releases/tag/%TAG%
