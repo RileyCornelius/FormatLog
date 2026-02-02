@@ -210,11 +210,18 @@ public:
     }
 #endif
 
-    void assertion(bool condition, const char *file, int line, const char *func, const char *expr, const char *message = "")
+    void checkedLog(const char *expr, const char *message = "")
     {
-        if (condition)
-            return;
+        fmt::basic_memory_buffer<char, LOG_STATIC_BUFFER_SIZE> buffer;
+        APPEND_COLOR(buffer, static_cast<LogLevel>(LOG_LEVEL_WARN));
+        fmt::format_to(fmt::appender(buffer), LOG_CHECK_FORMAT, expr, message);
+        APPEND_RESET_COLOR(buffer);
+        buffer.append(fmt::string_view(LOG_EOL));
+        serial->write(reinterpret_cast<const uint8_t *>(buffer.data()), buffer.size());
+    }
 
+    void assertionLog(const char *file, int line, const char *func, const char *expr, const char *message = "")
+    {
         fmt::basic_memory_buffer<char, LOG_STATIC_BUFFER_SIZE> buffer;
         APPEND_COLOR(buffer, static_cast<LogLevel>(LOG_LEVEL_ERROR));
         fmt::format_to(fmt::appender(buffer), LOG_PANIC_FORMAT, file, line, func, expr, message);
@@ -226,6 +233,14 @@ public:
 #if LOG_STORAGE_ENABLE
         flushStorage();
 #endif
+    }
+
+    void assertion(bool condition, const char *file, int line, const char *func, const char *expr, const char *message = "")
+    {
+        if (condition)
+            return;
+
+        assertionLog(file, line, func, expr, message);
 
         if (panicHandler != nullptr)
             panicHandler();
@@ -354,13 +369,55 @@ public:
 
 #if LOG_ASSERT_ENABLE
 /**
+ * @brief Asserts a condition and calls the panic handler if the assertion fails.
+ *
  * @param condition Condition to assert (true = pass, false = fail)
  * @param message (Optional) message to log on assertion failure
  */
 #define ASSERT(condition, ...) FormatLog::instance().assertion(!!(condition), __FILE__, __LINE__, __FUNCTION__, #condition, ##__VA_ARGS__)
+/**
+ * @brief Checks a condition and returns from the calling function if it fails.
+ *
+ * @param condition Condition to check (true = pass, false = fail)
+ * @param message (Optional) message to log on failure
+ */
+#define CHECK_OR_RETURN(condition, ...)                                                                    \
+    {                                                                                                      \
+        if (!(condition))                                                                                  \
+        {                                                                                                  \
+            FormatLog::instance().checkedLog(#condition, ##__VA_ARGS__); \
+            return;                                                    \
+        }                                                              \
+    }
+/**
+ * @brief Checks a condition and returns a value from the calling function if it fails.
+ *
+ * @param condition Condition to check (true = pass, false = fail)
+ * @param value Value to return on failure
+ * @param message (Optional) message to log on failure
+ */
+#define CHECK_OR_RETURN_VALUE(condition, value, ...)                    \
+    {                                                                  \
+        if (!(condition))                                              \
+        {                                                              \
+            FormatLog::instance().checkedLog(#condition, ##__VA_ARGS__); \
+            return (value);                                            \
+        }                                                                                                  \
+    }
+
 #define LOG_SET_PANIC_HANDLER(handler) FormatLog::instance().setPanicHandler(handler)
 #else
-#define ASSERT(condition)
+#define ASSERT(condition, ...)
+#define CHECK_OR_RETURN(condition, ...) \
+    {                                   \
+        if (!(condition))               \
+            return;                     \
+    }
+#define CHECK_OR_RETURN_VALUE(condition, value, ...) \
+    {                                                \
+        if (!(condition))                            \
+            return (value);                          \
+    }
 #define LOG_SET_PANIC_HANDLER(handler)
 #endif
 

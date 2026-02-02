@@ -52,6 +52,10 @@
 #define LOG_PANIC_FORMAT (LOG_EOL "[ASSERT] {}:{} - {}(): ({}) {}") // /r/n[ASSERT] {file}:{line} - {func}(): ({expr}) {message}
 #endif
 
+#ifndef LOG_CHECK_FORMAT
+#define LOG_CHECK_FORMAT "[CHECK] ({}) {}" // [CHECK] ({expr}) {message}
+#endif
+
 #ifndef LOG_PANIC_HANDLER
 inline void _logPanic()
 {
