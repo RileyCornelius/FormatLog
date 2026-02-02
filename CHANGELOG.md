@@ -16,9 +16,14 @@
 - `LOG_BENCHMARK_MICRO_BEGIN(label)` / `LOG_BENCHMARK_MICRO_END(label)` macros for microsecond-precision named sections
 - `LOG_BENCHMARK_MICRO_FORMAT` compile-time setting to customize micro benchmark output format
 - Benchmark example
+- `LOG_PRINT_ENABLE` compile-time setting to disable `LOG_PRINT`/`LOG_PRINTLN` macros (default: 1)
 
 ### Changed
 
+- `FmtLog.h` now lists all available settings with defaults and uses `#ifndef` guards for overridability
+- `LOG_STORAGE_ENABLE` default changed to `0` (disabled by default)
+
+- `LOG_PRINT`/`LOG_PRINTLN` macros now gated by `LOG_PRINT_ENABLE` instead of `LOG_LEVEL`
 - Moved all library types into `fmtlog` namespace (FormatLog, SourceLocation, enums, storage classes, benchmark/stopwatch classes, preamble functions)
 - Removed file extension from filename preamble (e.g. `main` instead of `main.cpp`)
 - Fixed LittleFS test failures caused by open file descriptors during cleanup

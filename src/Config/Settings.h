@@ -44,6 +44,10 @@
 #define LOG_PREAMBLE_ARGS(level, filename, linenumber, function) DEFAULT_PREAMBLE_ARGS(level, filename, linenumber, function)
 #endif
 
+#ifndef LOG_PRINT_ENABLE
+#define LOG_PRINT_ENABLE 1
+#endif
+
 #ifndef LOG_ASSERT_ENABLE
 #define LOG_ASSERT_ENABLE 1
 #endif
@@ -140,6 +144,8 @@ static_assert(LOG_FILENAME >= LOG_FILENAME_DISABLE && LOG_FILENAME <= LOG_FILENA
 static_assert(LOG_COLOR == LOG_COLOR_DISABLE || LOG_COLOR == LOG_COLOR_ENABLE,
               "LOG_COLOR must be either LOG_COLOR_DISABLE or LOG_COLOR_ENABLE");
 static_assert(LOG_STATIC_BUFFER_SIZE > 0, "LOG_STATIC_BUFFER_SIZE must be greater than 0");
+static_assert(LOG_PRINT_ENABLE == 0 || LOG_PRINT_ENABLE == 1,
+              "LOG_PRINT_ENABLE must be either 0 or 1");
 static_assert(LOG_ASSERT_ENABLE == 0 || LOG_ASSERT_ENABLE == 1,
               "LOG_ASSERT_ENABLE must be either 0 or 1");
 static_assert(LOG_STORAGE_ENABLE == 0 || LOG_STORAGE_ENABLE == 1,
