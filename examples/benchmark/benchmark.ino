@@ -58,6 +58,7 @@ void sendBatch()
 void calibrate()
 {
     auto sw = LOG_CREATE_STOPWATCH();
+    // fmtlog::Stopwatch sw; // or direct instantiation
 
     delay(100); // Step 1
     LOG_INFO("Step 1 done at {} ms", sw.elapsedMs());

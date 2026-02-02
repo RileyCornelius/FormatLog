@@ -62,11 +62,11 @@ namespace fmtlog
         }
         else if (format == LogTime::MICROS)
         {
-            sprintf(timeFormat, "%11lu", micros());
+            sprintf(timeFormat, "%10lu", micros());
         }
         else if (format == LogTime::MILLIS || format == LogTime::ENABLE)
         {
-            sprintf(timeFormat, "%8lu", millis());
+            sprintf(timeFormat, "%7lu", millis());
         }
 
         return timeFormat;
