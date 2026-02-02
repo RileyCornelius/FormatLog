@@ -5,9 +5,9 @@
 
 // * File System Selection - Choose one:
 // #define TEST_FS_SPIFFS
-// #define TEST_FS_LITTLEFS
+#define TEST_FS_LITTLEFS
 // #define TEST_FS_SD
-#define TEST_FS_SDFAT
+// #define TEST_FS_SDFAT
 
 #ifdef TEST_FS_SPIFFS
 #include <SPIFFS.h>
@@ -763,8 +763,9 @@ void setUp()
 
 void tearDown()
 {
-    // Flush any remaining buffered data before cleanup
-    LOG_FLUSH_STORAGE();
+    // Close storage (flushes buffer and releases file descriptor) before cleanup.
+    // LittleFS requires files to be closed before they can be deleted.
+    LOG_CLOSE_STORAGE();
     // Clean up after each test
     fsUtils->deleteAllFiles();
 }
