@@ -85,35 +85,42 @@ namespace preamble
         const char *filename = strrchr(file, '/') ? strrchr(file, '/') + 1 : strrchr(file, '\\') ? strrchr(file, '\\') + 1
                                                                                                  : file;
 
+        // Strip extension from filename
+        char nameOnly[64];
+        const char *dot = strrchr(filename, '.');
+        if (dot)
+        {
+            size_t len = dot - filename;
+            if (len >= sizeof(nameOnly))
+                len = sizeof(nameOnly) - 1;
+            strncpy(nameOnly, filename, len);
+            nameOnly[len] = '\0';
+        }
+        else
+        {
+            strncpy(nameOnly, filename, sizeof(nameOnly) - 1);
+            nameOnly[sizeof(nameOnly) - 1] = '\0';
+        }
+
         if (format == LogFilename::LINENUMBER_FUNCTION_ENABLE)
         {
             if (func)
             {
-                snprintf(result, sizeof(result), "%s:%d %s()", filename, line, func);
+                snprintf(result, sizeof(result), "%s:%d %s()", nameOnly, line, func);
             }
             else
             {
-                snprintf(result, sizeof(result), "%s:%d", filename, line);
+                snprintf(result, sizeof(result), "%s:%d", nameOnly, line);
             }
         }
         else if (format == LogFilename::LINENUMBER_ENABLE)
         {
-            snprintf(result, sizeof(result), "%s:%d", filename, line);
+            snprintf(result, sizeof(result), "%s:%d", nameOnly, line);
         }
         else if (format == LogFilename::ENABLE)
         {
-            const char *dot = strrchr(filename, '.');
-            if (dot)
-            {
-                size_t len = dot - filename;
-                strncpy(result, filename, len);
-                result[len] = '\0';
-            }
-            else
-            {
-                strncpy(result, filename, sizeof(result) - 1);
-                result[sizeof(result) - 1] = '\0';
-            }
+            strncpy(result, nameOnly, sizeof(result) - 1);
+            result[sizeof(result) - 1] = '\0';
         }
 
         return result;
