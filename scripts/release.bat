@@ -15,6 +15,30 @@ if "%VERSION%"=="" (
 
 set "TAG=%VERSION%"
 
+:: Verify git is authenticated (can reach remote)
+echo Verifying git authentication...
+git ls-remote origin >nul 2>&1
+if errorlevel 1 (
+    echo Error: Cannot reach git remote. Check your git authentication.
+    exit /b 1
+)
+
+:: Verify gh CLI is authenticated
+echo Verifying GitHub CLI authentication...
+gh auth status >nul 2>&1
+if errorlevel 1 (
+    echo Error: GitHub CLI is not authenticated. Run 'gh auth login' first.
+    exit /b 1
+)
+
+:: Verify pio account is logged in
+echo Verifying PlatformIO authentication...
+pio account show >nul 2>&1
+if errorlevel 1 (
+    echo Error: PlatformIO account is not logged in. Run 'pio account login' first.
+    exit /b 1
+)
+
 :: Check for uncommitted changes
 for /f "delims=" %%i in ('git status --porcelain') do (
     echo Error: Working directory has uncommitted changes. Commit or stash them first.
