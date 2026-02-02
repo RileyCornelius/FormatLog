@@ -10,9 +10,8 @@
 #define LOG_STREAM Serial
 
 // Storage settings
-#define LOG_STORAGE_ENABLE 1
+#define LOG_STORAGE_ENABLE 1             // MUST BE ENABLED
 #define LOG_STORAGE_LEVEL LOG_LEVEL_WARN // Store WARN and ERROR messages
-#define LOG_STORAGE_MAX_BUFFER_MESSAGES 32
 #define LOG_STORAGE_MAX_BUFFER_SIZE 4096
 #define LOG_STORAGE_MAX_FILE_SIZE (1024 * 100) // 100KB per file
 #define LOG_STORAGE_MAX_FILES 3

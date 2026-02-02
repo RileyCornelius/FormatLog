@@ -1,7 +1,5 @@
 #pragma once
 
-// Production-like configuration: color + timestamps + filename:line
-
 #ifndef LOG_LEVEL // Allow compiler override
 #define LOG_LEVEL LOG_LEVEL_TRACE
 #endif
