@@ -57,7 +57,7 @@ void sendBatch()
 // LOG_STOPWATCH: manual stopwatch for custom use
 void calibrate()
 {
-    auto sw = LOG_STOPWATCH();
+    auto sw = LOG_CREATE_STOPWATCH();
 
     delay(100); // Step 1
     LOG_INFO("Step 1 done at {} ms", sw.elapsedMs());

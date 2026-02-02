@@ -2,6 +2,9 @@
 
 #include <stddef.h>
 
+namespace fmtlog
+{
+
 class IFileManager
 {
 public:
@@ -18,3 +21,5 @@ public:
     virtual bool remove(const char *filePath) = 0;
     virtual bool rename(const char *oldPath, const char *newPath) = 0;
 };
+
+} // namespace fmtlog

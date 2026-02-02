@@ -5,6 +5,9 @@
 #include "IFileSink.h"
 #include "Storage/FileSystem/IFileManager.h"
 
+namespace fmtlog
+{
+
 class SimpleFileSink : public IFileSink
 {
 private:
@@ -66,3 +69,5 @@ public:
         return _filePath;
     }
 };
+
+} // namespace fmtlog

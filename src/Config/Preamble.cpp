@@ -2,7 +2,7 @@
 #include <sys/time.h>
 #include <Arduino.h>
 
-namespace preamble
+namespace fmtlog
 {
     const char *logLevelText(LogLevel level, LogLevelTextFormat format)
     {

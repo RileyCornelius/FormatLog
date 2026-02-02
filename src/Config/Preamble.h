@@ -2,7 +2,7 @@
 
 #include "Config/Options.h"
 
-namespace preamble
+namespace fmtlog
 {
     const char *logLevelText(LogLevel level, LogLevelTextFormat format = LogLevelTextFormat::FULL);
     const char *formatTime(LogTime format = LogTime::MILLIS);

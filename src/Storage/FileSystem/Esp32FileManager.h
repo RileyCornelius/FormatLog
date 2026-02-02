@@ -3,6 +3,9 @@
 #include "IFileManager.h"
 #include <string>
 
+namespace fmtlog
+{
+
 template <typename TFileSystem>
 class Esp32FileManager : public IFileManager
 {
@@ -85,3 +88,5 @@ public:
         return _fs.rename(oldPath, newPath);
     }
 };
+
+} // namespace fmtlog

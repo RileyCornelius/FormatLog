@@ -2,6 +2,9 @@
 
 #include <type_traits>
 
+namespace fmtlog
+{
+
 /**--------------------------------------------------------------------------------------
  * SFINAE building blocks for filesystem detection.
  *
@@ -103,3 +106,5 @@ struct IsSupportedFileSystem : std::integral_constant<bool,
                                                           IsSdFatFileSystem<TFS>::value>
 {
 };
+
+} // namespace fmtlog

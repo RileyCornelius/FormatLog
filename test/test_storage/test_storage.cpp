@@ -501,9 +501,9 @@ void test_storage_set_file_path_resets_state()
     const char *path2 = "/log_path2.txt";
 
     // Create concrete RotatingFileSink to access setFilePath
-    auto fileManager = createFileManager(TEST_FS);
-    auto sink = std::make_shared<RotatingFileSink<>>(fileManager, path1);
-    FormatLog::instance().setStorage(sink);
+    auto fileManager = fmtlog::createFileManager(TEST_FS);
+    auto sink = std::make_shared<fmtlog::RotatingFileSink<>>(fileManager, path1);
+    fmtlog::FormatLog::instance().setStorage(sink);
 
     // Write to first path
     LOG_WARN("Message to path 1");

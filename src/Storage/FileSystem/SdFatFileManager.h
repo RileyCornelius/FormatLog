@@ -3,6 +3,9 @@
 #include "IFileManager.h"
 #include <string>
 
+namespace fmtlog
+{
+
 template <typename TFileSystem>
 class SdFatFileManager : public IFileManager
 {
@@ -88,3 +91,5 @@ public:
         return _fs.rename(oldPath, newPath);
     }
 };
+
+} // namespace fmtlog

@@ -172,7 +172,7 @@ static_assert(LOG_STORAGE_NEW_FILE_ON_BOOT == 0 || LOG_STORAGE_NEW_FILE_ON_BOOT 
 
 #if LOG_TIME != LOG_TIME_DISABLE
 #define PREAMBLE_TIME_FORMAT LOG_FORMATTER
-#define PREAMBLE_TIME(format) fmtlog::formatTime(static_cast<LogTime>(format)),
+#define PREAMBLE_TIME(format) fmtlog::formatTime(static_cast<fmtlog::LogTime>(format)),
 #else
 #define PREAMBLE_TIME_FORMAT
 #define PREAMBLE_TIME(format)
@@ -180,13 +180,13 @@ static_assert(LOG_STORAGE_NEW_FILE_ON_BOOT == 0 || LOG_STORAGE_NEW_FILE_ON_BOOT 
 
 #if LOG_FILENAME != LOG_FILENAME_DISABLE
 #define PREAMBLE_FILENAME_FORMAT LOG_FORMATTER
-#define PREAMBLE_FILENAME(file, line, func, format) , fmtlog::formatFilename(file, line, func, static_cast<LogFilename>(format))
+#define PREAMBLE_FILENAME(file, line, func, format) , fmtlog::formatFilename(file, line, func, static_cast<fmtlog::LogFilename>(format))
 #else
 #define PREAMBLE_FILENAME_FORMAT
 #define PREAMBLE_FILENAME(file, line, func, format)
 #endif
 
-#define PREAMBLE_LOG_LEVEL(level, format) fmtlog::logLevelText(level, static_cast<LogLevelTextFormat>(format))
+#define PREAMBLE_LOG_LEVEL(level, format) fmtlog::logLevelText(level, static_cast<fmtlog::LogLevelTextFormat>(format))
 
 /**--------------------------------------------------------------------------------------
  * Default Preamble

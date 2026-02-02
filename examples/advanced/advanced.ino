@@ -24,14 +24,14 @@ void loop()
         if (iteration == 3)
         {
             LOG_INFO("Raising log level to WARN");
-            LOG_SET_LOG_LEVEL(LogLevel::WARN);
+            LOG_SET_LOG_LEVEL(fmtlog::LogLevel::WARN);
         }
 
         if (iteration == 6)
         {
             LOG_INFO("This won't print (level is WARN)");
             LOG_WARN("Restoring log level to TRACE");
-            LOG_SET_LOG_LEVEL(LogLevel::TRACE);
+            LOG_SET_LOG_LEVEL(fmtlog::LogLevel::TRACE);
         }
     }
 }

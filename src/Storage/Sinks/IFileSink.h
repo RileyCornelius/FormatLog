@@ -3,6 +3,9 @@
 #include <string>
 #include <stddef.h>
 
+namespace fmtlog
+{
+
 class IFileSink
 {
 public:
@@ -14,3 +17,5 @@ public:
     virtual void setFilePath(const char *path) = 0;
     virtual std::string getFilePath() const = 0;
 };
+
+} // namespace fmtlog

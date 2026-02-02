@@ -19,7 +19,7 @@
 
 ### Changed
 
-- Moved `Stopwatch`, `MicroStopwatch`, `Benchmark`, `ScopedBenchmark`, and preamble functions into `fmtlog` namespace
+- Moved all library types into `fmtlog` namespace (`FormatLog`, `SourceLocation`, enums, storage classes, benchmark/stopwatch classes, preamble functions)
 - Removed file extension from filename preamble (e.g. `main` instead of `main.cpp`)
 - Fixed LittleFS test failures caused by open file descriptors during cleanup
 

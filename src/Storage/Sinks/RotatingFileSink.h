@@ -7,6 +7,9 @@
 #include "IFileSink.h"
 #include "Storage/FileSystem/IFileManager.h"
 
+namespace fmtlog
+{
+
 template <size_t BufferSize = LOG_STORAGE_MAX_BUFFER_SIZE>
 class RotatingFileSink : public IFileSink
 {
@@ -190,3 +193,5 @@ public:
         return _filePath;
     }
 };
+
+} // namespace fmtlog

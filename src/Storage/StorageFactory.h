@@ -7,6 +7,9 @@
 #include "Storage/Sinks/RotatingFileSink.h"
 #include "Storage/Sinks/SimpleFileSink.h"
 
+namespace fmtlog
+{
+
 /**
  * Factory function to create a storage sink with rotating file and buffering.
  *
@@ -50,3 +53,5 @@ std::shared_ptr<IFileSink> createSimpleStorage(TFileSystem &fs,
     auto fileManager = createFileManager(fs);
     return std::make_shared<SimpleFileSink>(fileManager, filePath);
 }
+
+} // namespace fmtlog

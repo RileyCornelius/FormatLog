@@ -63,7 +63,7 @@ void testPanic() { gHalted = true; }
 void test_log_trace_basic_string()
 {
     gStream.clear();
-    LOG_SET_LOG_LEVEL(LogLevel::TRACE);
+    LOG_SET_LOG_LEVEL(fmtlog::LogLevel::TRACE);
 
     LOG_TRACE("Hello {}", 42);
 
@@ -75,7 +75,7 @@ void test_log_trace_basic_string()
 void test_log_level_filtering()
 {
     gStream.clear();
-    LOG_SET_LOG_LEVEL(LogLevel::ERROR);
+    LOG_SET_LOG_LEVEL(fmtlog::LogLevel::ERROR);
 
     LOG_WARN("ShouldNotAppear");
     TEST_ASSERT_EQUAL_UINT_MESSAGE(0, (unsigned int)gStream.str().size(), "WARN should be filtered out");
@@ -89,7 +89,7 @@ void test_log_level_filtering()
 void test_print_and_println()
 {
     gStream.clear();
-    LOG_SET_LOG_LEVEL(LogLevel::TRACE);
+    LOG_SET_LOG_LEVEL(fmtlog::LogLevel::TRACE);
 
     LOG_PRINT("ABC");
     TEST_ASSERT_EQUAL_STRING("ABC", gStream.c_str());
@@ -122,15 +122,15 @@ void test_log_runtime_level_api()
 {
     gStream.clear();
 
-    LOG_SET_LOG_LEVEL(LogLevel::WARN);
-    TEST_ASSERT_EQUAL(static_cast<int>(LogLevel::WARN), static_cast<int>(LOG_GET_LOG_LEVEL()));
+    LOG_SET_LOG_LEVEL(fmtlog::LogLevel::WARN);
+    TEST_ASSERT_EQUAL(static_cast<int>(fmtlog::LogLevel::WARN), static_cast<int>(LOG_GET_LOG_LEVEL()));
 
     LOG_INFO("Hidden message");
     TEST_ASSERT_EQUAL_UINT_MESSAGE(0, (unsigned int)gStream.str().size(), "INFO should be filtered when WARN level set");
 
     gStream.clear();
-    LOG_SET_LOG_LEVEL(LogLevel::DEBUG);
-    TEST_ASSERT_EQUAL(static_cast<int>(LogLevel::DEBUG), static_cast<int>(LOG_GET_LOG_LEVEL()));
+    LOG_SET_LOG_LEVEL(fmtlog::LogLevel::DEBUG);
+    TEST_ASSERT_EQUAL(static_cast<int>(fmtlog::LogLevel::DEBUG), static_cast<int>(LOG_GET_LOG_LEVEL()));
 
     LOG_DEBUG("Visible {}", 12);
     const std::string &out = gStream.str();
@@ -142,7 +142,7 @@ void test_log_level_stepdown()
 {
     gStream.clear();
 
-    LOG_SET_LOG_LEVEL(LogLevel::INFO);
+    LOG_SET_LOG_LEVEL(fmtlog::LogLevel::INFO);
     LOG_DEBUG("Filtered debug");
     TEST_ASSERT_EQUAL_UINT_MESSAGE(0, (unsigned int)gStream.str().size(), "DEBUG should be filtered when INFO level set");
 
@@ -162,10 +162,10 @@ void test_log_level_stepdown()
 void test_direct_value_logging()
 {
     gStream.clear();
-    LOG_SET_LOG_LEVEL(LogLevel::TRACE);
+    LOG_SET_LOG_LEVEL(fmtlog::LogLevel::TRACE);
 
-    const SourceLocation loc(__FILE__, __LINE__, __FUNCTION__);
-    FormatLog::instance().trace(loc, 12345);
+    const fmtlog::SourceLocation loc(__FILE__, __LINE__, __FUNCTION__);
+    fmtlog::FormatLog::instance().trace(loc, 12345);
 
     const std::string &out = gStream.str();
     TEST_ASSERT_FALSE_MESSAGE(out.empty(), "Direct trace value produced no output");
@@ -174,11 +174,11 @@ void test_direct_value_logging()
 
 void test_preamble_helpers()
 {
-    TEST_ASSERT_EQUAL_STRING("TRAC", preamble::logLevelText(LogLevel::TRACE, LogLevelTextFormat::SHORT));
-    TEST_ASSERT_EQUAL_STRING("test_FormatLog", preamble::formatFilename("/path/to/test_FormatLog.cpp", 123,
-                                                                        "irrelevant", LogFilename::ENABLE));
+    TEST_ASSERT_EQUAL_STRING("TRAC", fmtlog::logLevelText(fmtlog::LogLevel::TRACE, fmtlog::LogLevelTextFormat::SHORT));
+    TEST_ASSERT_EQUAL_STRING("test_FormatLog", fmtlog::formatFilename("/path/to/test_FormatLog.cpp", 123,
+                                                                        "irrelevant", fmtlog::LogFilename::ENABLE));
 
-    const char *withLineFunc = preamble::formatFilename("test_FormatLog.cpp", 77, "fn", LogFilename::LINENUMBER_FUNCTION_ENABLE);
+    const char *withLineFunc = fmtlog::formatFilename("test_FormatLog.cpp", 77, "fn", fmtlog::LogFilename::LINENUMBER_FUNCTION_ENABLE);
     TEST_ASSERT_NOT_NULL(strstr(withLineFunc, "test_FormatLog.cpp"));
     TEST_ASSERT_NOT_NULL(strstr(withLineFunc, "77"));
     TEST_ASSERT_NOT_NULL(strstr(withLineFunc, "fn"));
@@ -198,7 +198,7 @@ void test_assertion_pass_does_not_halt()
 void test_long_message_logging()
 {
     gStream.clear();
-    LOG_SET_LOG_LEVEL(LogLevel::TRACE);
+    LOG_SET_LOG_LEVEL(fmtlog::LogLevel::TRACE);
 
     const size_t payloadLen = static_cast<size_t>(LOG_STATIC_BUFFER_SIZE) + 32;
     std::string payload(payloadLen, 'X');
@@ -224,7 +224,7 @@ void setUp(void)
 {
     // Ensure buffer is clean
     gStream.clear();
-    LOG_SET_LOG_LEVEL(LogLevel::TRACE);
+    LOG_SET_LOG_LEVEL(fmtlog::LogLevel::TRACE);
 }
 
 void tearDown(void)
