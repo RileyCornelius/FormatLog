@@ -54,7 +54,7 @@
 - Refactored `FormatLog` class to use pointer for serial stream
 - Reversed log level numbering (0-5 to 5-0) so higher values = higher severity
 - Updated FmtLib dependency to 12.1.0
-- ASSERT_M merged into ASSERT
+- `ASSERT_M` merged into `ASSERT`
 - Renamed `LOG_HALT_FORMAT`/`LOG_HALT_FUNC` to `LOG_PANIC_FORMAT`/`LOG_PANIC_HANDLER`
 - Updated examples
 
