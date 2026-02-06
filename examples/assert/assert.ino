@@ -1,11 +1,16 @@
 #include <Arduino.h>
 #include "Log.h"
 
+#if defined(LED_BUILTIN)
+const int ledPin = LED_BUILTIN;
+#else
+const int ledPin = 13;
+#endif
+
 void panic()
 {
     LOG_PRINT("Panic! System halted.");
 
-    const int ledPin = LED_BUILTIN;
     pinMode(ledPin, OUTPUT);
     while (true)
     {

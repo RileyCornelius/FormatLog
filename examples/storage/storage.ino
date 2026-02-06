@@ -3,13 +3,13 @@
 
 // === Choose ONE filesystem by uncommenting the appropriate section ===
 
-// * --- LittleFS (default) --- *
-#include <LittleFS.h>
-#define FILE_SYSTEM LittleFS
-
 // * --- SPIFFS --- *
-// #include <SPIFFS.h>
-// #define FILE_SYSTEM SPIFFS
+#include <SPIFFS.h>
+#define FILE_SYSTEM SPIFFS
+
+// * --- LittleFS --- *
+// #include <LittleFS.h>
+// #define FILE_SYSTEM LittleFS
 
 // * --- SD --- *
 // #include <SD.h>
@@ -27,13 +27,13 @@
 
 void setup()
 {
-    // * --- LittleFS --- *
-    ASSERT(LittleFS.begin(true));
-    LOG_SET_STORAGE(LittleFS);
-
     // * --- SPIFFS --- *
-    // ASSERT(SPIFFS.begin(true));
-    // LOG_SET_STORAGE(SPIFFS);
+    ASSERT(SPIFFS.begin(true));
+    LOG_SET_STORAGE(SPIFFS);
+
+    // * --- LittleFS --- *
+    // ASSERT(LittleFS.begin(true));
+    // LOG_SET_STORAGE(LittleFS);
 
     // * --- SD --- *
     // SPI.begin();

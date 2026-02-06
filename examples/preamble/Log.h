@@ -8,8 +8,8 @@
 
 #define LOG_STREAM Serial
 
-// Custom Preamble - |millis|level|function| {msg}
-#define LOG_PREAMBLE_FORMAT "|{}|{}|{}| "
-#define LOG_PREAMBLE_ARGS(level, filename, linenumber, function) millis(), preamble::logLevelText(level, (LogLevelTextFormat)LOG_LEVEL_TEXT_FORMAT_SHORT), preamble::formatFilename(filename, linenumber, function, (LogFilename)LOG_FILENAME_ENABLE)
+// Custom Preamble - | millis | level | filename:number | {msg}
+#define LOG_PREAMBLE_FORMAT "| {} | {} | {} | "
+#define LOG_PREAMBLE_ARGS(level, filename, linenumber, function) millis(), fmtlog::logLevelText(level, fmtlog::LogLevelTextFormat::FULL), fmtlog::formatFilename(filename, linenumber, function, fmtlog::LogFilename::LINENUMBER_ENABLE)
 
 #include <FormatLog.h>
