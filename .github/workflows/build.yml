@@ -84,9 +84,6 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           fqbn: ${{ matrix.board.vendor }}:${{ matrix.board.arch }}:${{ matrix.board.name }}
-          cli-compile-flags: |
-            - "--build-property"
-            - "compiler.cpp.extra_flags=-I${{ github.workspace }}/src"
           platforms: |
             - name: ${{ matrix.board.vendor }}:${{ matrix.board.arch }}
               source-url: ${{ matrix.index }}
@@ -134,9 +131,6 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           fqbn: ${{ matrix.board.vendor }}:${{ matrix.board.arch }}:${{ matrix.board.name }}
-          cli-compile-flags: |
-            - "--build-property"
-            - "compiler.cpp.extra_flags=-I${{ github.workspace }}/src"
           platforms: |
             - name: ${{ matrix.board.vendor }}:${{ matrix.board.arch }}
               source-url: ${{ matrix.index }}

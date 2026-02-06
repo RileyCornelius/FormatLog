@@ -1,7 +1,5 @@
 #pragma once
 
-#include "Config/Preamble.h"
-
 #ifndef LOG_LEVEL // Incase LOG_LEVEL is defined by the compiler
 #define LOG_LEVEL LOG_LEVEL_TRACE
 #endif
