@@ -27,7 +27,6 @@
 - Removed file extension from filename preamble (e.g. `main` instead of `main.cpp`)
 - Fixed LittleFS test failures caused by open file descriptors during cleanup
 
-
 ## [0.6.0] - 2026-02-01
 
 ### Added
