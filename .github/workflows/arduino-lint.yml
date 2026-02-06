@@ -1,6 +1,7 @@
 on: [push, pull_request]
 jobs:
   lint:
+    name: Arduino Lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
