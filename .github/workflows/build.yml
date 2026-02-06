@@ -46,15 +46,6 @@ jobs:
           - vendor: STMicroelectronics
             arch: stm32
             name: Nucleo_64:pnum=NUCLEO_F401RE
-          - vendor: adafruit
-            arch: nrf52
-            name: feather52840
-          - vendor: teensy
-            arch: avr
-            name: teensy35
-          - vendor: teensy
-            arch: avr
-            name: teensy36
           - vendor: teensy
             arch: avr
             name: teensy41
@@ -71,9 +62,6 @@ jobs:
           - index: https://github.com/stm32duino/BoardManagerFiles/raw/main/package_stmicroelectronics_index.json
             board:
               vendor: STMicroelectronics
-          - index: https://adafruit.github.io/arduino-board-index/package_adafruit_index.json
-            board:
-              vendor: adafruit
     steps:
       - uses: actions/checkout@v4
       - uses: arduino/arduino-lint-action@v2
@@ -98,6 +86,45 @@ jobs:
             - name: FmtLib
           verbose: true
 
+  nrf52:
+    name: "Build nRF52: ${{ matrix.board.name }}"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        board:
+          - vendor: adafruit
+            arch: nrf52
+            name: feather52840
+        include:
+          - index: https://adafruit.github.io/arduino-board-index/package_adafruit_index.json
+            board:
+              vendor: adafruit
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile nRF52 examples
+        uses: arduino/compile-sketches@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          fqbn: ${{ matrix.board.vendor }}:${{ matrix.board.arch }}:${{ matrix.board.name }}
+          cli-compile-flags: |
+            - "--build-property"
+            - "compiler.cpp.extra_flags=-DFMT_USE_EXCEPTIONS=0"
+          platforms: |
+            - name: ${{ matrix.board.vendor }}:${{ matrix.board.arch }}
+              source-url: ${{ matrix.index }}
+          sketch-paths: |
+            - examples/basic
+            - examples/advanced
+            - examples/assert
+            - examples/benchmark
+            - examples/preamble
+          libraries: |
+            - source-path: ./
+            - name: FmtLib
+            - name: Adafruit TinyUSB Library
+          verbose: true
+
   storage:
     name: "Build Storage: ${{ matrix.board.arch }}:${{ matrix.board.name }}"
     runs-on: ubuntu-latest
@@ -105,9 +132,6 @@ jobs:
       fail-fast: false
       matrix:
         board:
-          - vendor: esp8266
-            arch: esp8266
-            name: generic
           - vendor: esp32
             arch: esp32
             name: esp32

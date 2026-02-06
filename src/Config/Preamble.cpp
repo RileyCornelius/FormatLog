@@ -41,7 +41,7 @@ namespace fmtlog
             }
             else
             {
-                sprintf(timeFormat, "");
+                timeFormat[0] = '\0';
             }
         }
         else if (format == LogTime::HHHHMMSSMS)
