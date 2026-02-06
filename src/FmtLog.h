@@ -51,26 +51,50 @@ Storage settings (when LOG_STORAGE_ENABLE is 1):
    LOG_STORAGE_NEW_FILE_ON_BOOT         (default: 0)
 */
 
-// Default Logger Settings (can be overridden in project settings)
+// Serial Settings
 #ifndef LOG_LEVEL
 #define LOG_LEVEL LOG_LEVEL_TRACE
 #endif
-
-// Serial Settings
+#ifndef LOG_LEVEL_TEXT_FORMAT
 #define LOG_LEVEL_TEXT_FORMAT LOG_LEVEL_TEXT_FORMAT_SHORT
-#define LOG_TIME LOG_TIME_DISABLE
+#endif
+#ifndef LOG_TIME
+#define LOG_TIME LOG_TIME_ENABLE
+#endif
+#ifndef LOG_FILENAME
 #define LOG_FILENAME LOG_FILENAME_ENABLE
+#endif
+#ifndef LOG_COLOR
 #define LOG_COLOR LOG_COLOR_DISABLE
+#endif
+#ifndef LOG_STATIC_BUFFER_SIZE
 #define LOG_STATIC_BUFFER_SIZE 128
+#endif
+#ifndef LOG_STREAM
 #define LOG_STREAM Serial
+#endif
 
 // Storage Settings
+#ifndef LOG_STORAGE_ENABLE
 #define LOG_STORAGE_ENABLE 1
+#endif
+#ifndef LOG_STORAGE_LEVEL
 #define LOG_STORAGE_LEVEL LOG_LEVEL_WARN
+#endif
+#ifndef LOG_STORAGE_FILE_PATH
 #define LOG_STORAGE_FILE_PATH "/log.txt"
+#endif
+#ifndef LOG_STORAGE_MAX_BUFFER_SIZE
 #define LOG_STORAGE_MAX_BUFFER_SIZE 4096
-#define LOG_STORAGE_MAX_FILE_SIZE 1024
+#endif
+#ifndef LOG_STORAGE_MAX_FILE_SIZE
+#define LOG_STORAGE_MAX_FILE_SIZE 102400
+#endif
+#ifndef LOG_STORAGE_MAX_FILES
 #define LOG_STORAGE_MAX_FILES 3
-#define LOG_STORAGE_NEW_FILE_ON_BOOT 0
+#endif
+#ifndef LOG_STORAGE_NEW_FILE_ON_BOOT
+#define LOG_STORAGE_NEW_FILE_ON_BOOT 1
+#endif
 
 #include <FormatLog.h>
