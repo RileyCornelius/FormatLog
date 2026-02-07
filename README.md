@@ -114,6 +114,7 @@ Available levels (in order of severity):
 
 Options:
 - `LOG_TIME_DISABLE` - No timestamps
+- `LOG_TIME_ENABLE` - Alias for `LOG_TIME_MILLIS`
 - `LOG_TIME_MICROS` - Microseconds since boot
 - `LOG_TIME_MILLIS` - Milliseconds since boot
 - `LOG_TIME_HHMMSSMS` - Time since boot format: `HH:MM:SS:MS`
@@ -272,6 +273,46 @@ LOG_SET_STORAGE(FFat);
 SdFat sd;
 sd.begin(SS);
 LOG_SET_STORAGE(sd);
+```
+
+### Simple Storage
+
+For lightweight logging without buffering or rotation, use `createSimpleStorage`. Each write is buffered directly in the filesystem:
+
+```cpp
+#include <LittleFS.h>
+
+void setup() {
+    LOG_BEGIN(115200);
+    LittleFS.begin(true);
+
+    auto sink = fmtlog::createSimpleStorage(LittleFS, "/log.txt");
+    FmtLog.setStorage(sink);
+}
+```
+
+### Custom Sink
+
+You can create a custom storage sink by implementing the `IFileSink` interface:
+
+```cpp
+#include "Storage/Sinks/IFileSink.h"
+
+class MyCustomSink : public fmtlog::IFileSink {
+public:
+    bool write(const char *data, size_t size) override { /* write data */ }
+    void flush() override { /* flush to storage */ }
+    void close() override { /* release resources */ }
+    void setFilePath(const char *path) override { /* update path */ }
+    std::string getFilePath() const override { /* return current path */ }
+};
+```
+
+Then pass it to the logger:
+
+```cpp
+auto sink = std::make_shared<MyCustomSink>();
+FmtLog.setStorage(sink);
 ```
 
 ## Benchmarking

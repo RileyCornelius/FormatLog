@@ -1,5 +1,23 @@
 # Changelog
 
+## [unreleased]
+
+### Changed
+
+- Updated FmtLib dependency to 12.1.0
+- `FmtLog.h` all settings now wrapped with `#ifndef` guards for overridability
+- `FmtLog.h` default for `LOG_TIME` changed from `LOG_TIME_DISABLE` to `LOG_TIME_ENABLE` (milliseconds)
+- `FmtLog.h` default for `LOG_STORAGE_MAX_FILE_SIZE` changed from 1024 to 102400
+- `FmtLog.h` default for `LOG_STORAGE_NEW_FILE_ON_BOOT` changed from 0 to 1
+- Updated preamble example to use `fmtlog` namespace
+- Updated storage example default filesystem from LittleFS to SPIFFS
+
+### Fixed
+
+- Fixed `sprintf(timeFormat, "")` compiler warning in `Preamble.cpp`
+- Fixed `LED_BUILTIN` undefined on some boards in assert example
+- Renamed `panic` to `panicHandler` in assert example to avoid naming conflicts
+
 ## [0.6.1] - 2026-02-01
 
 ### Added
@@ -17,6 +35,7 @@
 - `LOG_BENCHMARK_MICRO_FORMAT` compile-time setting to customize micro benchmark output format
 - Benchmark example
 - `LOG_PRINT_ENABLE` compile-time setting to disable `LOG_PRINT`/`LOG_PRINTLN` macros (default: 1)
+- `SimpleFileSink` and `createSimpleStorage` factory for lightweight logging without buffering or rotation
 
 ### Changed
 
@@ -37,7 +56,7 @@
 - `RotatingFileSink` template class with configurable buffer size
 - `Esp32FileManager` for LittleFS/SPIFFS filesystems
 - `SdFatFileManager` for SdFat filesystems
-- `createStorage` factory function for simplified storage setup
+- `createRotatingStorage` factory function for simplified storage setup
 - `setPanicHandler` and `LOG_SET_PANIC_HANDLER` for runtime setting of panic hander
 - Compile-time storage settings: `LOG_STORAGE_ENABLE`, `LOG_STORAGE_LEVEL`, `LOG_STORAGE_FILE_PATH`, `LOG_STORAGE_MAX_BUFFER_SIZE`, `LOG_STORAGE_MAX_FILE_SIZE`, `LOG_STORAGE_MAX_FILES`, `LOG_STORAGE_NEW_FILE_ON_BOOT`, `LOG_STORAGE_PREAMBLE_FORMAT`, `LOG_STORAGE_PREAMBLE_ARGS`
 - Runtime storage macros: `LOG_SET_STORAGE`, `LOG_SET_STORAGE_LOG_LEVEL`, `LOG_GET_STORAGE_LOG_LEVEL`, `LOG_FLUSH_STORAGE`, `LOG_CLOSE_STORAGE`, `LOG_SET_STORAGE_FILE_PATH`, `LOG_GET_STORAGE_FILE_PATH`
