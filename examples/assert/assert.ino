@@ -7,7 +7,7 @@ const int ledPin = LED_BUILTIN;
 const int ledPin = 13;
 #endif
 
-void panic()
+void panicHandler()
 {
     LOG_PRINT("Panic! System halted.");
 
@@ -39,7 +39,7 @@ void connectToSensor(int pin)
 void setup()
 {
     LOG_BEGIN(115200);
-    LOG_SET_PANIC_HANDLER(panic); // Set custom panic handler at runtime
+    LOG_SET_PANIC_HANDLER(panicHandler); // Set custom panic handler at runtime
 
     delay(3000); // Wait for serial to initialize
 

@@ -39,8 +39,8 @@ LOG_COLOR
 
 #define LOG_STREAM Serial
 
-void panic();                   // forward declaration custom halt function
-#define LOG_PANIC_HANDLER panic // set custom panic handler at compile time
+void panicHandler();                   // forward declaration custom halt function
+#define LOG_PANIC_HANDLER panicHandler // set custom panic handler at compile time
 
 #define LOG_ASSERT_ENABLE 1
 
