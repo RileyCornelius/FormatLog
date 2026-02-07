@@ -4,6 +4,7 @@ setlocal enabledelayedexpansion
 :: Release script for FormatLog
 :: Usage: scripts\release.bat <version>
 :: Example: scripts\release.bat 0.6.0
+:: Re-runnable: skips steps that are already done
 
 set "VERSION=%~1"
 
@@ -14,6 +15,7 @@ if "%VERSION%"=="" (
 )
 
 set "TAG=%VERSION%"
+set "ZIP_FILE=FormatLog-%VERSION%.zip"
 
 :: Verify git is authenticated (can reach remote)
 echo Verifying git authentication...
@@ -52,11 +54,11 @@ if not "%BRANCH%"=="main" (
     exit /b 1
 )
 
-:: Check tag doesn't already exist
+:: Check if tag already exists (resume mode)
 git rev-parse "%TAG%" >nul 2>&1
 if not errorlevel 1 (
-    echo Error: Tag %TAG% already exists
-    exit /b 1
+    echo Tag %TAG% already exists, resuming release...
+    goto :package
 )
 
 :: Update version in library.json and library.properties
@@ -64,10 +66,10 @@ echo Updating version to %VERSION%...
 powershell -Command "(Get-Content library.json) -replace '\"version\": \".*\"', '\"version\": \"%VERSION%\"' | Set-Content library.json"
 powershell -Command "(Get-Content library.properties) -replace '^version=.*', 'version=%VERSION%' | Set-Content library.properties"
 
-:: Update changelog date
+:: Update changelog: replace [unreleased] heading with version and date
 for /f "delims=" %%i in ('powershell -Command "Get-Date -Format yyyy-MM-dd"') do set "TODAY=%%i"
-echo Updating CHANGELOG.md date to %TODAY%...
-powershell -Command "(Get-Content CHANGELOG.md) -replace '## \[%VERSION%\] - Unreleased', '## [%VERSION%] - %TODAY%' | Set-Content CHANGELOG.md"
+echo Updating CHANGELOG.md [unreleased] to [%VERSION%] - %TODAY%...
+powershell -Command "(Get-Content CHANGELOG.md) -replace '## \[unreleased\]', '## [%VERSION%] - %TODAY%' | Set-Content CHANGELOG.md"
 
 :: Commit, tag, and push
 echo Committing version bump...
@@ -84,23 +86,34 @@ if errorlevel 1 exit /b 1
 git push origin "%TAG%"
 if errorlevel 1 exit /b 1
 
+:package
 :: Package library with pio and convert to zip
-echo Packaging library...
-set "TAR_FILE=FormatLog-%VERSION%.tar.gz"
-set "ZIP_FILE=FormatLog-%VERSION%.zip"
-pio pkg pack -o "%TAR_FILE%"
-if errorlevel 1 exit /b 1
+if not exist "%ZIP_FILE%" (
+    echo Packaging library...
+    set "TAR_FILE=FormatLog-%VERSION%.tar.gz"
+    pio pkg pack -o "!TAR_FILE!"
+    if errorlevel 1 exit /b 1
 
-powershell -Command ^
-    "$tar = '%TAR_FILE%'; " ^
-    "$zip = '%ZIP_FILE%'; " ^
-    "$tmp = New-Item -ItemType Directory -Path (Join-Path $env:TEMP ('pio_pack_' + [guid]::NewGuid().ToString('N'))); " ^
-    "tar -xzf $tar -C $tmp.FullName; " ^
-    "Compress-Archive -Path (Join-Path $tmp.FullName '*') -DestinationPath $zip -Force; " ^
-    "Remove-Item $tmp.FullName -Recurse -Force"
-if errorlevel 1 exit /b 1
+    powershell -Command ^
+        "$tar = '!TAR_FILE!'; " ^
+        "$zip = '%ZIP_FILE%'; " ^
+        "$tmp = New-Item -ItemType Directory -Path (Join-Path $env:TEMP ('pio_pack_' + [guid]::NewGuid().ToString('N'))); " ^
+        "tar -xzf $tar -C $tmp.FullName; " ^
+        "Compress-Archive -Path (Join-Path $tmp.FullName '*') -DestinationPath $zip -Force; " ^
+        "Remove-Item $tmp.FullName -Recurse -Force"
+    if errorlevel 1 exit /b 1
 
-del "%TAR_FILE%" 2>nul
+    del "!TAR_FILE!" 2>nul
+) else (
+    echo Package %ZIP_FILE% already exists, skipping...
+)
+
+:: Check if GitHub release already exists
+gh release view "%TAG%" >nul 2>&1
+if not errorlevel 1 (
+    echo GitHub release %TAG% already exists, skipping...
+    goto :publish
+)
 
 :: Extract release notes from CHANGELOG.md
 set "NOTES_FILE=%TEMP%\release_notes.tmp"
@@ -113,6 +126,7 @@ powershell -Command ^
     "  if ($found -and $line -match '^## \[') { break } " ^
     "  if ($found) { $notes += $line } " ^
     "} " ^
+    "if ($notes.Count -eq 0) { $notes = @('Release v%VERSION%') }; " ^
     "$notes | Set-Content '%NOTES_FILE%'"
 
 echo Creating GitHub release %TAG%...
@@ -126,6 +140,7 @@ if errorlevel 1 (
 del "%NOTES_FILE%" 2>nul
 del "%ZIP_FILE%" 2>nul
 
+:publish
 :: Publish to PlatformIO registry
 echo Publishing to PlatformIO registry...
 pio pkg publish --no-interactive
