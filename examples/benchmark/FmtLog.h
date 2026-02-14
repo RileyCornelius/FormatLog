@@ -6,7 +6,7 @@
 #define LOG_COLOR LOG_COLOR_ENABLE
 #define LOG_STREAM Serial
 
-#define LOG_BENCHMARK_LOG LOG_DEBUG               // Log macro used for benchmark output
+#define LOG_BENCHMARK_LOG LOG_DEBUG                // Log macro used for benchmark output
 #define LOG_BENCHMARK_FORMAT "[{}] elapsed {} ms" // Format: [label] elapsed {ms} ms
 
 #include <FormatLog.h>

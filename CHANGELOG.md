@@ -37,6 +37,8 @@
   - `closeStorage` → `closeFile`
   - `setStorageFilePath` → `setFilePath`
   - `getStorageFilePath` → `getFilePath`
+- Removed pre-configured `FmtLog.h`; use project-local `Log.h` (including `FormatLog.h`) for defaults/configuration.
+- Updated examples and README guidance to use project-local `FmtLog.h` as the configuration header name.
 - Examples: `examples/storage` → `examples/file_storage`
 - Tests: `test/test_storage` → `test/test_file_storage`
 

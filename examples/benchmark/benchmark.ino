@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include "Log.h"
+#include "FmtLog.h"
 
 // LOG_BENCHMARK: automatically logs elapsed time when the function returns
 void sensorRead()

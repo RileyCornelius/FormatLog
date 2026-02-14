@@ -61,7 +61,7 @@ These defaults provide a basic logging setup that works out of the box. You can 
 
 ### Custom Configuration Example
 
-The recommended way to use this library is to use the pre configured `FmtLog.h` or create a `Log.h` file in your project and define all settings before including `FormatLog.h`. Then include `Log.h` instead of `FormatLog.h` across your project.
+The recommended way to use this library is to create a `FmtLog.h` file in your project and define all settings before including `FormatLog.h`. Then include `FmtLog.h` instead of `FormatLog.h` across your project.
 
 ```cpp
 #pragma once
@@ -95,7 +95,7 @@ The recommended way to use this library is to use the pre configured `FmtLog.h` 
 To turn off all logging output in one `.cpp` file only, include `DisableFormatLog.h` **after** your usual log header. Log macros in that file become no-ops; `ASSERT`, `CHECK_OR_RETURN`, and `CHECK_OR_RETURN_VALUE` stay active.
 
 ```cpp
-#include "Log.h"           // or FormatLog.h
+#include "FmtLog.h"        // or FormatLog.h
 #include "DisableFormatLog.h"
 
 void noisyHelper() {
