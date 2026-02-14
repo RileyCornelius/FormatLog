@@ -2,6 +2,10 @@
 
 ## [unreleased]
 
+### Added
+
+- `DisableFormatLog.h` — include after `FormatLog.h` in a `.cpp` to disable all log output macros in that file (assert/check macros remain active)
+
 ## [0.6.2] - 2026-02-06
 
 ### Changed

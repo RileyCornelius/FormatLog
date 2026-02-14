@@ -90,6 +90,19 @@ The recommended way to use this library is to use the pre configured `FmtLog.h` 
 #include <FormatLog.h>
 ```
 
+### Disable logs in a single file
+
+To turn off all logging output in one `.cpp` file only, include `DisableFormatLog.h` **after** your usual log header. Log macros in that file become no-ops; `ASSERT`, `CHECK_OR_RETURN`, and `CHECK_OR_RETURN_VALUE` stay active.
+
+```cpp
+#include "Log.h"           // or FormatLog.h
+#include "DisableFormatLog.h"
+
+void noisyHelper() {
+    LOG_DEBUG("skipped");  // no output
+}
+```
+
 ## Configuration Details
 
 ### Log Levels

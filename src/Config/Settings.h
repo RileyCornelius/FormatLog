@@ -172,8 +172,8 @@ static_assert(LOG_STORAGE_NEW_FILE_ON_BOOT == 0 || LOG_STORAGE_NEW_FILE_ON_BOOT 
 #define APPEND_COLOR(buf, level) buf.append(fmt::string_view(fmtlog::colorText(level)));
 #define APPEND_RESET_COLOR(buf) buf.append(fmt::string_view(COLOR_RESET));
 #else
-#define APPEND_COLOR(buf, level)
-#define APPEND_RESET_COLOR(buf)
+#define APPEND_COLOR(buf, level) ((void)0)
+#define APPEND_RESET_COLOR(buf) ((void)0)
 #endif
 
 #if LOG_TIME != LOG_TIME_DISABLE

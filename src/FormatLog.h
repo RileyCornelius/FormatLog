@@ -312,31 +312,31 @@ namespace fmtlog
 #if LOG_LEVEL >= LOG_LEVEL_TRACE || (LOG_STORAGE_ENABLE && LOG_STORAGE_LEVEL >= LOG_LEVEL_TRACE)
 #define LOG_TRACE(format, ...) fmtlog::FormatLog::instance().trace(fmtlog::SourceLocation(__FILE__, __LINE__, __FUNCTION__), format, ##__VA_ARGS__)
 #else
-#define LOG_TRACE(format, ...)
+#define LOG_TRACE(format, ...) ((void)0)
 #endif
 
 #if LOG_LEVEL >= LOG_LEVEL_DEBUG || (LOG_STORAGE_ENABLE && LOG_STORAGE_LEVEL >= LOG_LEVEL_DEBUG)
 #define LOG_DEBUG(format, ...) fmtlog::FormatLog::instance().debug(fmtlog::SourceLocation(__FILE__, __LINE__, __FUNCTION__), format, ##__VA_ARGS__)
 #else
-#define LOG_DEBUG(format, ...)
+#define LOG_DEBUG(format, ...) ((void)0)
 #endif
 
 #if LOG_LEVEL >= LOG_LEVEL_INFO || (LOG_STORAGE_ENABLE && LOG_STORAGE_LEVEL >= LOG_LEVEL_INFO)
 #define LOG_INFO(format, ...) fmtlog::FormatLog::instance().info(fmtlog::SourceLocation(__FILE__, __LINE__, __FUNCTION__), format, ##__VA_ARGS__)
 #else
-#define LOG_INFO(format, ...)
+#define LOG_INFO(format, ...) ((void)0)
 #endif
 
 #if LOG_LEVEL >= LOG_LEVEL_WARN || (LOG_STORAGE_ENABLE && LOG_STORAGE_LEVEL >= LOG_LEVEL_WARN)
 #define LOG_WARN(format, ...) fmtlog::FormatLog::instance().warn(fmtlog::SourceLocation(__FILE__, __LINE__, __FUNCTION__), format, ##__VA_ARGS__)
 #else
-#define LOG_WARN(format, ...)
+#define LOG_WARN(format, ...) ((void)0)
 #endif
 
 #if LOG_LEVEL >= LOG_LEVEL_ERROR || (LOG_STORAGE_ENABLE && LOG_STORAGE_LEVEL >= LOG_LEVEL_ERROR)
 #define LOG_ERROR(format, ...) fmtlog::FormatLog::instance().error(fmtlog::SourceLocation(__FILE__, __LINE__, __FUNCTION__), format, ##__VA_ARGS__)
 #else
-#define LOG_ERROR(format, ...)
+#define LOG_ERROR(format, ...) ((void)0)
 #endif
 
 /**--------------------------------------------------------------------------------------
@@ -350,10 +350,10 @@ namespace fmtlog
 #define LOG_SET_LOG_LEVEL(level) fmtlog::FormatLog::instance().setLogLevel(level)
 #define LOG_GET_LOG_LEVEL() fmtlog::FormatLog::instance().getLogLevel()
 #else
-#define LOG_BEGIN(baud)
-#define LOG_END()
-#define LOG_FLUSH()
-#define LOG_SET_LOG_LEVEL(level)
+#define LOG_BEGIN(baud) ((void)0)
+#define LOG_END() ((void)0)
+#define LOG_FLUSH() ((void)0)
+#define LOG_SET_LOG_LEVEL(level) ((void)0)
 #define LOG_GET_LOG_LEVEL() fmtlog::LogLevel::DISABLE
 #endif
 
@@ -361,8 +361,8 @@ namespace fmtlog
 #define LOG_PRINT(format, ...) fmtlog::FormatLog::instance().print(format, ##__VA_ARGS__)
 #define LOG_PRINTLN(format, ...) fmtlog::FormatLog::instance().println(format, ##__VA_ARGS__)
 #else
-#define LOG_PRINT(format, ...)
-#define LOG_PRINTLN(format, ...)
+#define LOG_PRINT(format, ...) ((void)0)
+#define LOG_PRINTLN(format, ...) ((void)0)
 #endif
 
 /**--------------------------------------------------------------------------------------
@@ -467,7 +467,7 @@ inline void _logBenchmarkCallback(const char *label, uint32_t elapsedMs)
 
 #define LOG_SET_PANIC_HANDLER(handler) fmtlog::FormatLog::instance().setPanicHandler(handler)
 #else
-#define ASSERT(condition, ...)
+#define ASSERT(condition, ...) ((void)0)
 #define CHECK_OR_RETURN(condition, ...) \
     {                                   \
         if (!(condition))               \
@@ -478,7 +478,7 @@ inline void _logBenchmarkCallback(const char *label, uint32_t elapsedMs)
         if (!(condition))                            \
             return (value);                          \
     }
-#define LOG_SET_PANIC_HANDLER(handler)
+#define LOG_SET_PANIC_HANDLER(handler) ((void)0)
 #endif
 
 #if LOG_STORAGE_ENABLE
@@ -528,12 +528,12 @@ inline void _logBenchmarkCallback(const char *label, uint32_t elapsedMs)
  */
 #define LOG_GET_STORAGE_FILE_PATH() fmtlog::FormatLog::instance().getStorageFilePath()
 #else
-#define LOG_SET_STORAGE(fs, ...)
-#define LOG_SET_STORAGE_LOG_LEVEL(level)
+#define LOG_SET_STORAGE(fs, ...) ((void)0)
+#define LOG_SET_STORAGE_LOG_LEVEL(level) ((void)0)
 #define LOG_GET_STORAGE_LOG_LEVEL() fmtlog::LogLevel::DISABLE
-#define LOG_FLUSH_STORAGE()
-#define LOG_CLOSE_STORAGE()
-#define LOG_SET_STORAGE_FILE_PATH(path)
+#define LOG_FLUSH_STORAGE() ((void)0)
+#define LOG_CLOSE_STORAGE() ((void)0)
+#define LOG_SET_STORAGE_FILE_PATH(path) ((void)0)
 #define LOG_GET_STORAGE_FILE_PATH() std::string("")
 #endif // LOG_STORAGE_ENABLE
 
