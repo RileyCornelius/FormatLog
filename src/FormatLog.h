@@ -6,8 +6,8 @@
 #include "Benchmark/Benchmark.h"
 #include "fmt.h"
 
-#if LOG_STORAGE_ENABLE
-#include "Storage/StorageFactory.h"
+#if LOG_FILE_ENABLE
+#include "FileStorage/FileStorageFactory.h"
 #endif
 
 namespace fmtlog
@@ -33,13 +33,13 @@ namespace fmtlog
         LogLevel logLevel = static_cast<LogLevel>(LOG_LEVEL);
         PanicHandler panicHandler = LOG_PANIC_HANDLER;
 
-#if LOG_STORAGE_ENABLE
-        std::shared_ptr<IFileSink> storage;
-        LogLevel storageLogLevel = static_cast<LogLevel>(LOG_STORAGE_LEVEL);
+#if LOG_FILE_ENABLE
+        std::shared_ptr<IFileSink> fileStorage;
+        LogLevel fileLogLevel = static_cast<LogLevel>(LOG_FILE_LEVEL);
 
-        bool shouldLogStorage(LogLevel level)
+        bool shouldLogFileStorage(LogLevel level)
         {
-            return storage && level <= storageLogLevel;
+            return fileStorage && level <= fileLogLevel;
         }
 #endif
 
@@ -62,14 +62,14 @@ namespace fmtlog
                 serial->write(reinterpret_cast<const uint8_t *>(buffer.data()), buffer.size());
             }
 
-#if LOG_STORAGE_ENABLE
-            if (shouldLogStorage(level))
+#if LOG_FILE_ENABLE
+            if (shouldLogFileStorage(level))
             {
                 fmt::basic_memory_buffer<char, LOG_STATIC_BUFFER_SIZE> buffer;
-                fmt::format_to(fmt::appender(buffer), LOG_STORAGE_PREAMBLE_FORMAT, LOG_STORAGE_PREAMBLE_ARGS(level, loc.filename, loc.line, loc.funcname));
+                fmt::format_to(fmt::appender(buffer), LOG_FILE_PREAMBLE_FORMAT, LOG_FILE_PREAMBLE_ARGS(level, loc.filename, loc.line, loc.funcname));
                 fmt::vformat_to(fmt::appender(buffer), format, fmt::make_format_args(args...));
                 buffer.append(fmt::string_view(LOG_EOL));
-                storage->write(buffer.data(), buffer.size());
+                fileStorage->write(buffer.data(), buffer.size());
             }
 #endif
         }
@@ -77,10 +77,10 @@ namespace fmtlog
     public:
         FormatLog(Stream *stream = &Serial) : serial(stream) {}
 
-#if LOG_STORAGE_ENABLE
+#if LOG_FILE_ENABLE
         ~FormatLog()
         {
-            storage.reset();
+            fileStorage.reset();
         }
 #endif
 
@@ -95,45 +95,45 @@ namespace fmtlog
             serial = &stream;
         }
 
-#if LOG_STORAGE_ENABLE
-        void setStorage(std::shared_ptr<IFileSink> sink)
+#if LOG_FILE_ENABLE
+        void setFileStorage(std::shared_ptr<IFileSink> sink)
         {
-            storage.reset();
-            storage = sink;
+            fileStorage.reset();
+            fileStorage = sink;
         }
 
-        void setStorageLogLevel(LogLevel level)
+        void setFileLogLevel(LogLevel level)
         {
-            storageLogLevel = level;
+            fileLogLevel = level;
         }
 
-        LogLevel getStorageLogLevel()
+        LogLevel getFileLogLevel()
         {
-            return storageLogLevel;
+            return fileLogLevel;
         }
 
-        void flushStorage()
+        void flushFile()
         {
-            if (storage)
-                storage->flush();
+            if (fileStorage)
+                fileStorage->flush();
         }
 
-        void closeStorage()
+        void closeFile()
         {
-            if (storage)
-                storage->close();
+            if (fileStorage)
+                fileStorage->close();
         }
 
-        void setStorageFilePath(const char *path)
+        void setFilePath(const char *path)
         {
-            if (storage)
-                storage->setFilePath(path);
+            if (fileStorage)
+                fileStorage->setFilePath(path);
         }
 
-        std::string getStorageFilePath() const
+        std::string getFilePath() const
         {
-            if (storage)
-                return storage->getFilePath();
+            if (fileStorage)
+                return fileStorage->getFilePath();
             return "";
         }
 #endif
@@ -187,7 +187,7 @@ namespace fmtlog
             serial->write(reinterpret_cast<const uint8_t *>(buffer.data()), buffer.size());
         }
 
-#if LOG_STORAGE_ENABLE
+#if LOG_FILE_ENABLE
         template <typename T>
         void printFile(const T &message)
         {
@@ -197,11 +197,11 @@ namespace fmtlog
         template <typename... Args>
         void printFile(fmt::format_string<Args...> format, Args &&...args)
         {
-            if (!storage)
+            if (!fileStorage)
                 return;
             fmt::basic_memory_buffer<char, LOG_STATIC_BUFFER_SIZE> buffer;
             fmt::vformat_to(fmt::appender(buffer), format, fmt::make_format_args(args...));
-            storage->write(buffer.data(), buffer.size());
+            fileStorage->write(buffer.data(), buffer.size());
         }
 
         template <typename T>
@@ -213,12 +213,12 @@ namespace fmtlog
         template <typename... Args>
         void printlnFile(fmt::format_string<Args...> format, Args &&...args)
         {
-            if (!storage)
+            if (!fileStorage)
                 return;
             fmt::basic_memory_buffer<char, LOG_STATIC_BUFFER_SIZE> buffer;
             fmt::vformat_to(fmt::appender(buffer), format, fmt::make_format_args(args...));
             buffer.append(fmt::string_view(LOG_EOL));
-            storage->write(buffer.data(), buffer.size());
+            fileStorage->write(buffer.data(), buffer.size());
         }
 #endif
 
@@ -242,8 +242,8 @@ namespace fmtlog
             serial->write(reinterpret_cast<const uint8_t *>(buffer.data()), buffer.size());
 
             flush();
-#if LOG_STORAGE_ENABLE
-            flushStorage();
+#if LOG_FILE_ENABLE
+            flushFile();
 #endif
         }
 
@@ -325,31 +325,31 @@ namespace fmtlog
  * Logger Log Macros
  *-------------------------------------------------------------------------------------*/
 
-#if LOG_LEVEL >= LOG_LEVEL_TRACE || (LOG_STORAGE_ENABLE && LOG_STORAGE_LEVEL >= LOG_LEVEL_TRACE)
+#if LOG_LEVEL >= LOG_LEVEL_TRACE || (LOG_FILE_ENABLE && LOG_FILE_LEVEL >= LOG_LEVEL_TRACE)
 #define LOG_TRACE(format, ...) fmtlog::FormatLog::instance().trace(fmtlog::SourceLocation(__FILE__, __LINE__, __FUNCTION__), format, ##__VA_ARGS__)
 #else
 #define LOG_TRACE(format, ...) ((void)0)
 #endif
 
-#if LOG_LEVEL >= LOG_LEVEL_DEBUG || (LOG_STORAGE_ENABLE && LOG_STORAGE_LEVEL >= LOG_LEVEL_DEBUG)
+#if LOG_LEVEL >= LOG_LEVEL_DEBUG || (LOG_FILE_ENABLE && LOG_FILE_LEVEL >= LOG_LEVEL_DEBUG)
 #define LOG_DEBUG(format, ...) fmtlog::FormatLog::instance().debug(fmtlog::SourceLocation(__FILE__, __LINE__, __FUNCTION__), format, ##__VA_ARGS__)
 #else
 #define LOG_DEBUG(format, ...) ((void)0)
 #endif
 
-#if LOG_LEVEL >= LOG_LEVEL_INFO || (LOG_STORAGE_ENABLE && LOG_STORAGE_LEVEL >= LOG_LEVEL_INFO)
+#if LOG_LEVEL >= LOG_LEVEL_INFO || (LOG_FILE_ENABLE && LOG_FILE_LEVEL >= LOG_LEVEL_INFO)
 #define LOG_INFO(format, ...) fmtlog::FormatLog::instance().info(fmtlog::SourceLocation(__FILE__, __LINE__, __FUNCTION__), format, ##__VA_ARGS__)
 #else
 #define LOG_INFO(format, ...) ((void)0)
 #endif
 
-#if LOG_LEVEL >= LOG_LEVEL_WARN || (LOG_STORAGE_ENABLE && LOG_STORAGE_LEVEL >= LOG_LEVEL_WARN)
+#if LOG_LEVEL >= LOG_LEVEL_WARN || (LOG_FILE_ENABLE && LOG_FILE_LEVEL >= LOG_LEVEL_WARN)
 #define LOG_WARN(format, ...) fmtlog::FormatLog::instance().warn(fmtlog::SourceLocation(__FILE__, __LINE__, __FUNCTION__), format, ##__VA_ARGS__)
 #else
 #define LOG_WARN(format, ...) ((void)0)
 #endif
 
-#if LOG_LEVEL >= LOG_LEVEL_ERROR || (LOG_STORAGE_ENABLE && LOG_STORAGE_LEVEL >= LOG_LEVEL_ERROR)
+#if LOG_LEVEL >= LOG_LEVEL_ERROR || (LOG_FILE_ENABLE && LOG_FILE_LEVEL >= LOG_LEVEL_ERROR)
 #define LOG_ERROR(format, ...) fmtlog::FormatLog::instance().error(fmtlog::SourceLocation(__FILE__, __LINE__, __FUNCTION__), format, ##__VA_ARGS__)
 #else
 #define LOG_ERROR(format, ...) ((void)0)
@@ -497,9 +497,9 @@ inline void _logBenchmarkCallback(const char *label, uint32_t elapsedMs)
 #define LOG_SET_PANIC_HANDLER(handler) ((void)0)
 #endif
 
-#if LOG_STORAGE_ENABLE
+#if LOG_FILE_ENABLE
 /**
- * @brief Sets up log storage with a rotating file sink. Use SPIFFS, LittleFS, SD, or SdFat.
+ * @brief Sets up file storage with a rotating file sink. Use SPIFFS, LittleFS, SD, or SdFat.
  *
  * @param fs Reference to the file system
  * @param filePath (Optional) Path to the log file
@@ -507,44 +507,44 @@ inline void _logBenchmarkCallback(const char *label, uint32_t elapsedMs)
  * @param maxFileSize (Optional) Maximum size of each log file before rotation
  * @param rotateOnInit (Optional) Whether to rotate the existing log file on initialization
  */
-#define LOG_SET_STORAGE(fs, ...) fmtlog::FormatLog::instance().setStorage(fmtlog::createRotatingStorage(fs, ##__VA_ARGS__))
+#define LOG_SET_FILE_STORAGE(fs, ...) fmtlog::FormatLog::instance().setFileStorage(fmtlog::createRotatingFileStorage(fs, ##__VA_ARGS__))
 /**
  * @param level LogLevel to set (e.g. fmtlog::LogLevel::WARN)
  */
-#define LOG_SET_STORAGE_LOG_LEVEL(level) fmtlog::FormatLog::instance().setStorageLogLevel(level)
+#define LOG_SET_FILE_LOG_LEVEL(level) fmtlog::FormatLog::instance().setFileLogLevel(level)
 /**
- * @return Current LogLevel used for storage filtering
+ * @return Current LogLevel used for file storage filtering
  */
-#define LOG_GET_STORAGE_LOG_LEVEL() fmtlog::FormatLog::instance().getStorageLogLevel()
+#define LOG_GET_FILE_LOG_LEVEL() fmtlog::FormatLog::instance().getFileLogLevel()
 /**
- * Flushes the storage write buffer to the log file.
+ * Flushes the file storage write buffer to the log file.
  */
-#define LOG_FLUSH_STORAGE() fmtlog::FormatLog::instance().flushStorage()
+#define LOG_FLUSH_FILE() fmtlog::FormatLog::instance().flushFile()
 /**
  * Flushes any remaining data and releases the file handle.
  */
-#define LOG_CLOSE_STORAGE() fmtlog::FormatLog::instance().closeStorage()
+#define LOG_CLOSE_FILE() fmtlog::FormatLog::instance().closeFile()
 /**
  * @param path New file path for the log file (e.g. "/logs/app.txt")
  */
-#define LOG_SET_STORAGE_FILE_PATH(path) fmtlog::FormatLog::instance().setStorageFilePath(path)
+#define LOG_SET_FILE_PATH(path) fmtlog::FormatLog::instance().setFilePath(path)
 /**
  * @return std::string containing the current log file path
  */
-#define LOG_GET_STORAGE_FILE_PATH() fmtlog::FormatLog::instance().getStorageFilePath()
+#define LOG_GET_FILE_PATH() fmtlog::FormatLog::instance().getFilePath()
 #define LOG_PRINT_FILE(format, ...) fmtlog::FormatLog::instance().printFile(format, ##__VA_ARGS__)
 #define LOG_PRINTLN_FILE(format, ...) fmtlog::FormatLog::instance().printlnFile(format, ##__VA_ARGS__)
 #else
-#define LOG_SET_STORAGE(fs, ...) ((void)0)
-#define LOG_SET_STORAGE_LOG_LEVEL(level) ((void)0)
-#define LOG_GET_STORAGE_LOG_LEVEL() fmtlog::LogLevel::DISABLE
-#define LOG_FLUSH_STORAGE() ((void)0)
-#define LOG_CLOSE_STORAGE() ((void)0)
-#define LOG_SET_STORAGE_FILE_PATH(path) ((void)0)
-#define LOG_GET_STORAGE_FILE_PATH() std::string("")
+#define LOG_SET_FILE_STORAGE(fs, ...) ((void)0)
+#define LOG_SET_FILE_LOG_LEVEL(level) ((void)0)
+#define LOG_GET_FILE_LOG_LEVEL() fmtlog::LogLevel::DISABLE
+#define LOG_FLUSH_FILE() ((void)0)
+#define LOG_CLOSE_FILE() ((void)0)
+#define LOG_SET_FILE_PATH(path) ((void)0)
+#define LOG_GET_FILE_PATH() std::string("")
 #define LOG_PRINT_FILE(format, ...) ((void)0)
 #define LOG_PRINTLN_FILE(format, ...) ((void)0)
-#endif // LOG_STORAGE_ENABLE
+#endif // LOG_FILE_ENABLE
 
 /**--------------------------------------------------------------------------------------
  * Global Logger Instance

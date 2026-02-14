@@ -2,8 +2,8 @@
 
 #include <string>
 #include <memory>
-#include "IFileSink.h"
-#include "Storage/FileSystem/IFileManager.h"
+#include "FileStorage/Sinks/IFileSink.h"
+#include "FileStorage/FileSystem/IFileManager.h"
 
 namespace fmtlog
 {
@@ -23,7 +23,7 @@ private:
 
 public:
     SimpleFileSink(std::shared_ptr<IFileManager> fileManager,
-                   const char *path = LOG_STORAGE_FILE_PATH)
+                   const char *path = LOG_FILE_PATH)
         : _fileManager(fileManager),
           _filePath(path)
     {

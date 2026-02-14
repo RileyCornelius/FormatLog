@@ -92,8 +92,8 @@ jobs:
             - name: FmtLib
           verbose: true
 
-  storage:
-    name: "Build Storage: ${{ matrix.board.arch }}:${{ matrix.board.name }}"
+  file_storage:
+    name: "Build File Storage: ${{ matrix.board.arch }}:${{ matrix.board.name }}"
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -111,7 +111,7 @@ jobs:
               vendor: esp32
     steps:
       - uses: actions/checkout@v4
-      - name: Compile storage example
+      - name: Compile file storage example
         uses: arduino/compile-sketches@v1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -120,7 +120,7 @@ jobs:
             - name: ${{ matrix.board.vendor }}:${{ matrix.board.arch }}
               source-url: ${{ matrix.index }}
           sketch-paths: |
-            - examples/storage
+            - examples/file_storage
           libraries: |
             - source-path: ./
             - name: FmtLib

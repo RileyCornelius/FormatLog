@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include "Log.h" // Check Log.h configuration for storage settings
+#include "Log.h" // Check Log.h configuration for file storage settings
 
 // === Choose ONE filesystem by uncommenting the appropriate section ===
 
@@ -29,29 +29,29 @@ void setup()
 {
     // * --- SPIFFS --- *
     ASSERT(SPIFFS.begin(true));
-    LOG_SET_STORAGE(SPIFFS);
+    LOG_SET_FILE_STORAGE(SPIFFS);
 
     // * --- LittleFS --- *
     // ASSERT(LittleFS.begin(true));
-    // LOG_SET_STORAGE(LittleFS);
+    // LOG_SET_FILE_STORAGE(LittleFS);
 
     // * --- SD --- *
     // SPI.begin();
     // ASSERT(SD.begin(SS, SPI));
-    // LOG_SET_STORAGE(SD);
+    // LOG_SET_FILE_STORAGE(SD);
 
     // * --- FFat --- *
     // ASSERT(FFat.begin(true));
-    // LOG_SET_STORAGE(FFat);
+    // LOG_SET_FILE_STORAGE(FFat);
 
     // * --- SdFat --- *
     // SPI.begin();
     // ASSERT(sd.begin(SD_CS_PIN));
-    // LOG_SET_STORAGE(sd);
+    // LOG_SET_FILE_STORAGE(sd);
 
     delay(3000);
     LOG_BEGIN(115200);
-    LOG_INFO("Storage initialized");
+    LOG_INFO("File storage initialized");
 }
 
 void loop()
@@ -79,11 +79,11 @@ void loop()
         if (iteration % 20 == 0)
         {
             // Ensure file is closed before reading (this flushes any remaining data)
-            LOG_CLOSE_STORAGE();
+            LOG_CLOSE_FILE();
 
             // Read and print log file contents
             LOG_PRINTLN("--- Reading Log File (Iteration {}) ---", iteration);
-            auto file = FILE_SYSTEM.open(LOG_GET_STORAGE_FILE_PATH().c_str());
+            auto file = FILE_SYSTEM.open(LOG_GET_FILE_PATH().c_str());
             if (file)
             {
                 while (file.available())
@@ -99,7 +99,7 @@ void loop()
             }
 
             // Clean up log file for next iterations
-            FILE_SYSTEM.remove(LOG_GET_STORAGE_FILE_PATH().c_str());
+            FILE_SYSTEM.remove(LOG_GET_FILE_PATH().c_str());
         }
     }
 }

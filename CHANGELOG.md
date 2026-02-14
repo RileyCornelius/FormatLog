@@ -10,6 +10,35 @@
 ### Changed
 
 - Replaced `FormatLog::printStorage(...)` with `FormatLog::printFile(...)` and `FormatLog::printlnFile(...)`
+- Renamed storage API to file storage: 
+  - `src/Storage/` → `src/FileStorage/`
+  - `StorageFactory.h` → `FileStorageFactory.h`
+  - `createRotatingStorage` → `createRotatingFileStorage`
+  - `createSimpleStorage` → `createSimpleFileStorage`
+- Compile-time macros:
+  - `LOG_STORAGE_*` → `LOG_FILE_ENABLE`
+  - `LOG_FILE_LEVEL`, `LOG_FILE_PATH`
+  - `LOG_FILE_MAX_BUFFER_SIZE`, `LOG_FILE_MAX_SIZE`
+  - `LOG_FILE_MAX_FILES`, `LOG_FILE_NEW_ON_BOOT`
+  - `LOG_FILE_PREAMBLE_*`
+- Runtime macros:
+  - `LOG_SET_STORAGE` → `LOG_SET_FILE_STORAGE`
+  - `LOG_SET_STORAGE_LOG_LEVEL` → `LOG_SET_FILE_LOG_LEVEL`
+  - `LOG_GET_STORAGE_LOG_LEVEL` → `LOG_GET_FILE_LOG_LEVEL`
+  - `LOG_FLUSH_STORAGE` → `LOG_FLUSH_FILE`
+  - `LOG_CLOSE_STORAGE` → `LOG_CLOSE_FILE`
+  - `LOG_SET_STORAGE_FILE_PATH` → `LOG_SET_FILE_PATH`
+  - `LOG_GET_STORAGE_FILE_PATH` → `LOG_GET_FILE_PATH`
+- FormatLog methods: 
+  - `setStorage` → `setFileStorage`
+  - `setStorageLogLevel` → `setFileLogLevel`
+  - `getStorageLogLevel` → `getFileLogLevel`
+  - `flushStorage` → `flushFile`
+  - `closeStorage` → `closeFile`
+  - `setStorageFilePath` → `setFilePath`
+  - `getStorageFilePath` → `getFilePath`
+- Examples: `examples/storage` → `examples/file_storage`
+- Tests: `test/test_storage` → `test/test_file_storage`
 
 ## [0.6.2] - 2026-02-06
 

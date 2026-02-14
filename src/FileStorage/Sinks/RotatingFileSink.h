@@ -4,13 +4,13 @@
 #include <memory>
 #include <fmt.h>
 #include "Config/Settings.h"
-#include "IFileSink.h"
-#include "Storage/FileSystem/IFileManager.h"
+#include "FileStorage/Sinks/IFileSink.h"
+#include "FileStorage/FileSystem/IFileManager.h"
 
 namespace fmtlog
 {
 
-template <size_t BufferSize = LOG_STORAGE_MAX_BUFFER_SIZE>
+template <size_t BufferSize = LOG_FILE_MAX_BUFFER_SIZE>
 class RotatingFileSink : public IFileSink
 {
 private:
@@ -88,10 +88,10 @@ private:
 
 public:
     RotatingFileSink(std::shared_ptr<IFileManager> fileManager,
-                     const char *path = LOG_STORAGE_FILE_PATH,
-                     size_t maxFiles = LOG_STORAGE_MAX_FILES,
-                     size_t maxFileSize = LOG_STORAGE_MAX_FILE_SIZE,
-                     bool rotateOnInit = LOG_STORAGE_NEW_FILE_ON_BOOT)
+                     const char *path = LOG_FILE_PATH,
+                     size_t maxFiles = LOG_FILE_MAX_FILES,
+                     size_t maxFileSize = LOG_FILE_MAX_SIZE,
+                     bool rotateOnInit = LOG_FILE_NEW_ON_BOOT)
         : _fileManager(fileManager),
           _filePath(path),
           _maxFiles(maxFiles),

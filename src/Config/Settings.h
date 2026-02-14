@@ -89,45 +89,45 @@ inline void _logPanic()
 #define LOG_FORMATTER "[{}]"
 #endif
 
-#ifndef LOG_STORAGE_ENABLE
-#define LOG_STORAGE_ENABLE 0
+#ifndef LOG_FILE_ENABLE
+#define LOG_FILE_ENABLE 0
 #endif
 
-#if LOG_STORAGE_ENABLE
+#if LOG_FILE_ENABLE
 
-#ifndef LOG_STORAGE_LEVEL
-#define LOG_STORAGE_LEVEL LOG_LEVEL_WARN
+#ifndef LOG_FILE_LEVEL
+#define LOG_FILE_LEVEL LOG_LEVEL_WARN
 #endif
 
-#ifndef LOG_STORAGE_FILE_PATH
-#define LOG_STORAGE_FILE_PATH "/log.txt"
+#ifndef LOG_FILE_PATH
+#define LOG_FILE_PATH "/log.txt"
 #endif
 
-#ifndef LOG_STORAGE_MAX_BUFFER_SIZE
-#define LOG_STORAGE_MAX_BUFFER_SIZE 4096
+#ifndef LOG_FILE_MAX_BUFFER_SIZE
+#define LOG_FILE_MAX_BUFFER_SIZE 4096
 #endif
 
-#ifndef LOG_STORAGE_MAX_FILE_SIZE
-#define LOG_STORAGE_MAX_FILE_SIZE 102400 // 100KB
+#ifndef LOG_FILE_MAX_SIZE
+#define LOG_FILE_MAX_SIZE 102400 // 100KB
 #endif
 
-#ifndef LOG_STORAGE_MAX_FILES
-#define LOG_STORAGE_MAX_FILES 3 // Number of rotated log files to keep. Set to 0 to disable rotation (logging stops at MAX_FILE_SIZE)
+#ifndef LOG_FILE_MAX_FILES
+#define LOG_FILE_MAX_FILES 3 // Number of rotated log files to keep. Set to 0 to disable rotation (logging stops at MAX_FILE_SIZE)
 #endif
 
-#ifndef LOG_STORAGE_NEW_FILE_ON_BOOT
-#define LOG_STORAGE_NEW_FILE_ON_BOOT 0 // Rotate on first write to preserve old log file. Set to 1 to enable.
+#ifndef LOG_FILE_NEW_ON_BOOT
+#define LOG_FILE_NEW_ON_BOOT 0 // Rotate on first write to preserve old log file. Set to 1 to enable.
 #endif
 
-#ifndef LOG_STORAGE_PREAMBLE_FORMAT
-#define LOG_STORAGE_PREAMBLE_FORMAT DEFAULT_STORAGE_PREAMBLE_FORMAT
+#ifndef LOG_FILE_PREAMBLE_FORMAT
+#define LOG_FILE_PREAMBLE_FORMAT DEFAULT_FILE_PREAMBLE_FORMAT
 #endif
 
-#ifndef LOG_STORAGE_PREAMBLE_ARGS
-#define LOG_STORAGE_PREAMBLE_ARGS(level, filename, linenumber, function) DEFAULT_STORAGE_PREAMBLE_ARGS(level, filename, linenumber, function)
+#ifndef LOG_FILE_PREAMBLE_ARGS
+#define LOG_FILE_PREAMBLE_ARGS(level, filename, linenumber, function) DEFAULT_FILE_PREAMBLE_ARGS(level, filename, linenumber, function)
 #endif
 
-#endif // LOG_STORAGE_ENABLE
+#endif // LOG_FILE_ENABLE
 
 /**--------------------------------------------------------------------------------------
  * Static Assertions for Settings Validation
@@ -148,20 +148,20 @@ static_assert(LOG_PRINT_ENABLE == 0 || LOG_PRINT_ENABLE == 1,
               "LOG_PRINT_ENABLE must be either 0 or 1");
 static_assert(LOG_ASSERT_ENABLE == 0 || LOG_ASSERT_ENABLE == 1,
               "LOG_ASSERT_ENABLE must be either 0 or 1");
-static_assert(LOG_STORAGE_ENABLE == 0 || LOG_STORAGE_ENABLE == 1,
-              "LOG_STORAGE_ENABLE must be either 0 or 1");
+static_assert(LOG_FILE_ENABLE == 0 || LOG_FILE_ENABLE == 1,
+              "LOG_FILE_ENABLE must be either 0 or 1");
 
-#if LOG_STORAGE_ENABLE
-static_assert(LOG_STORAGE_LEVEL >= LOG_LEVEL_DISABLE && LOG_STORAGE_LEVEL <= LOG_LEVEL_TRACE,
-              "LOG_STORAGE_LEVEL must be between LOG_LEVEL_DISABLE and LOG_LEVEL_TRACE");
-static_assert(LOG_STORAGE_MAX_BUFFER_SIZE > 0,
-              "LOG_STORAGE_MAX_BUFFER_SIZE must be greater than 0");
-static_assert(LOG_STORAGE_MAX_FILE_SIZE > 0,
-              "LOG_STORAGE_MAX_FILE_SIZE must be greater than 0");
-static_assert(LOG_STORAGE_MAX_FILES >= 0,
-              "LOG_STORAGE_MAX_FILES must be greater than or equal to 0");
-static_assert(LOG_STORAGE_NEW_FILE_ON_BOOT == 0 || LOG_STORAGE_NEW_FILE_ON_BOOT == 1,
-              "LOG_STORAGE_NEW_FILE_ON_BOOT must be either 0 or 1");
+#if LOG_FILE_ENABLE
+static_assert(LOG_FILE_LEVEL >= LOG_LEVEL_DISABLE && LOG_FILE_LEVEL <= LOG_LEVEL_TRACE,
+              "LOG_FILE_LEVEL must be between LOG_LEVEL_DISABLE and LOG_LEVEL_TRACE");
+static_assert(LOG_FILE_MAX_BUFFER_SIZE > 0,
+              "LOG_FILE_MAX_BUFFER_SIZE must be greater than 0");
+static_assert(LOG_FILE_MAX_SIZE > 0,
+              "LOG_FILE_MAX_SIZE must be greater than 0");
+static_assert(LOG_FILE_MAX_FILES >= 0,
+              "LOG_FILE_MAX_FILES must be greater than or equal to 0");
+static_assert(LOG_FILE_NEW_ON_BOOT == 0 || LOG_FILE_NEW_ON_BOOT == 1,
+              "LOG_FILE_NEW_ON_BOOT must be either 0 or 1");
 #endif
 
 /**--------------------------------------------------------------------------------------
@@ -201,5 +201,5 @@ static_assert(LOG_STORAGE_NEW_FILE_ON_BOOT == 0 || LOG_STORAGE_NEW_FILE_ON_BOOT 
 #define DEFAULT_PREAMBLE_FORMAT (PREAMBLE_TIME_FORMAT LOG_FORMATTER PREAMBLE_FILENAME_FORMAT " ")
 #define DEFAULT_PREAMBLE_ARGS(level, filename, linenumber, function) PREAMBLE_TIME(LOG_TIME) PREAMBLE_LOG_LEVEL(level, LOG_LEVEL_TEXT_FORMAT) PREAMBLE_FILENAME(filename, linenumber, function, LOG_FILENAME)
 
-#define DEFAULT_STORAGE_PREAMBLE_FORMAT (PREAMBLE_TIME_FORMAT LOG_FORMATTER " ")
-#define DEFAULT_STORAGE_PREAMBLE_ARGS(level, filename, linenumber, function) PREAMBLE_TIME(LOG_TIME) PREAMBLE_LOG_LEVEL(level, LOG_LEVEL_TEXT_FORMAT)
+#define DEFAULT_FILE_PREAMBLE_FORMAT (PREAMBLE_TIME_FORMAT LOG_FORMATTER " ")
+#define DEFAULT_FILE_PREAMBLE_ARGS(level, filename, linenumber, function) PREAMBLE_TIME(LOG_TIME) PREAMBLE_LOG_LEVEL(level, LOG_LEVEL_TEXT_FORMAT)

@@ -53,7 +53,7 @@ If no configuration is provided, FormatLog uses the following defaults:
 #define LOG_FILENAME LOG_FILENAME_ENABLE       // Filename only (no line/function)
 #define LOG_STATIC_BUFFER_SIZE 128             // 128 byte static buffer
 #define LOG_STREAM Serial                      // Default to Serial output
-#define LOG_STORAGE_ENABLE 0                   // File storage disabled
+#define LOG_FILE_ENABLE 0                      // File storage disabled
 #define LOG_PRINT_ENABLE 1                     // Print macros enabled
 ```
 
@@ -226,26 +226,26 @@ This gives you complete control over the log message structure while maintaining
 
 FormatLog supports writing logs to files with buffered writes and automatic log rotation. It works with LittleFS, SPIFFS, SD, FFat, and SdFat filesystems. The filesystem type is auto-detected. 
 
-### Storage Configuration
+### File storage configuration
 
 ```cpp
-#define LOG_STORAGE_ENABLE 0                          // Enable file storage (default: 0)
-#define LOG_STORAGE_LEVEL LOG_LEVEL_WARN              // Minimum level for storage (default: WARN)
-#define LOG_STORAGE_FILE_PATH "/log.txt"              // Log file path (default: "/log.txt")
-#define LOG_STORAGE_MAX_BUFFER_SIZE 4096              // Write buffer size (default: 4096)
-#define LOG_STORAGE_MAX_FILE_SIZE 102400              // Max file size before rotation (default: 100KB)
-#define LOG_STORAGE_MAX_FILES 3                       // Rotated backups to keep (default: 3, 0 = no rotation)
-#define LOG_STORAGE_NEW_FILE_ON_BOOT 0                // Rotate on first write (default: 0)
+#define LOG_FILE_ENABLE 0                          // Enable file storage (default: 0)
+#define LOG_FILE_LEVEL LOG_LEVEL_WARN              // Minimum level for file (default: WARN)
+#define LOG_FILE_PATH "/log.txt"                   // Log file path (default: "/log.txt")
+#define LOG_FILE_MAX_BUFFER_SIZE 4096              // Write buffer size (default: 4096)
+#define LOG_FILE_MAX_SIZE 102400                   // Max file size before rotation (default: 100KB)
+#define LOG_FILE_MAX_FILES 3                       // Rotated backups to keep (default: 3, 0 = no rotation)
+#define LOG_FILE_NEW_ON_BOOT 0                     // Rotate on first write (default: 0)
 ```
 
-Storage has its own preamble that can be customized independently:
+File storage has its own preamble that can be customized independently:
 
 ```cpp
-#define LOG_STORAGE_PREAMBLE_FORMAT "[{}][{}] "
-#define LOG_STORAGE_PREAMBLE_ARGS(level, filename, linenumber, function) ...
+#define LOG_FILE_PREAMBLE_FORMAT "[{}][{}] "
+#define LOG_FILE_PREAMBLE_ARGS(level, filename, linenumber, function) ...
 ```
 
-### Storage Usage
+### File storage usage
 
 ```cpp
 #include <LittleFS.h>
@@ -253,13 +253,13 @@ Storage has its own preamble that can be customized independently:
 void setup() {
     LOG_BEGIN(115200);
     LittleFS.begin(true);
-    LOG_SET_STORAGE(LittleFS); // Auto detect type (will work with any supported FS)
+    LOG_SET_FILE_STORAGE(LittleFS); // Auto detect type (will work with any supported FS)
 
     LOG_WARN("This goes to serial AND file storage");
-    LOG_TRACE("This goes to serial only (below storage level)");
+    LOG_TRACE("This goes to serial only (below file level)");
 
-    LOG_FLUSH_STORAGE();    // Flush buffer to file
-    LOG_CLOSE_STORAGE();    // Close the file
+    LOG_FLUSH_FILE();    // Flush buffer to file
+    LOG_CLOSE_FILE();    // Close the file
 }
 ```
 
@@ -268,29 +268,29 @@ Supported filesystems:
 ```cpp
 // LittleFS
 LittleFS.begin(true);
-LOG_SET_STORAGE(LittleFS);
+LOG_SET_FILE_STORAGE(LittleFS);
 
 // SPIFFS
 SPIFFS.begin(true);
-LOG_SET_STORAGE(SPIFFS);
+LOG_SET_FILE_STORAGE(SPIFFS);
 
 // SD
 SD.begin(SS, SPI);
-LOG_SET_STORAGE(SD);
+LOG_SET_FILE_STORAGE(SD);
 
 // FFat
 FFat.begin(true);
-LOG_SET_STORAGE(FFat);
+LOG_SET_FILE_STORAGE(FFat);
 
 // SdFat
 SdFat sd;
 sd.begin(SS);
-LOG_SET_STORAGE(sd);
+LOG_SET_FILE_STORAGE(sd);
 ```
 
-### Simple Storage
+### Simple file storage
 
-For lightweight logging without buffering or rotation, use `createSimpleStorage`. Each write is buffered directly in the filesystem:
+For lightweight logging without buffering or rotation, use `createSimpleFileStorage`. Each write is buffered directly in the filesystem:
 
 ```cpp
 #include <LittleFS.h>
@@ -299,22 +299,22 @@ void setup() {
     LOG_BEGIN(115200);
     LittleFS.begin(true);
 
-    auto sink = fmtlog::createSimpleStorage(LittleFS, "/log.txt");
-    FmtLog.setStorage(sink);
+    auto sink = fmtlog::createSimpleFileStorage(LittleFS, "/log.txt");
+    FmtLog.setFileStorage(sink);
 }
 ```
 
 ### Custom Sink
 
-You can create a custom storage sink by implementing the `IFileSink` interface:
+You can create a custom file sink by implementing the `IFileSink` interface:
 
 ```cpp
-#include "Storage/Sinks/IFileSink.h"
+#include "FileStorage/Sinks/IFileSink.h"
 
 class MyCustomSink : public fmtlog::IFileSink {
 public:
     bool write(const char *data, size_t size) override { /* write data */ }
-    void flush() override { /* flush to storage */ }
+    void flush() override { /* flush to file */ }
     void close() override { /* release resources */ }
     void setFilePath(const char *path) override { /* update path */ }
     std::string getFilePath() const override { /* return current path */ }
@@ -325,7 +325,7 @@ Then pass it to the logger:
 
 ```cpp
 auto sink = std::make_shared<MyCustomSink>();
-FmtLog.setStorage(sink);
+FmtLog.setFileStorage(sink);
 ```
 
 ## Benchmarking
@@ -482,18 +482,18 @@ void connectToSensor(int pin) {
 
 When assertions are disabled (`LOG_ASSERT_ENABLE 0`), `CHECK_OR_RETURN` and `CHECK_OR_RETURN_VALUE` still perform the condition check and return, but skip the log output.
 
-### Storage Macros
+### File storage macros
 
 ```cpp
-LOG_SET_STORAGE(fs)                  // Initialize storage with a filesystem
-LOG_SET_STORAGE_LOG_LEVEL(level)     // Change storage log level at runtime
-LOG_GET_STORAGE_LOG_LEVEL()          // Get current storage log level
-LOG_FLUSH_STORAGE()                  // Flush buffer to file
-LOG_CLOSE_STORAGE()                  // Close the log file
-LOG_SET_STORAGE_FILE_PATH(path)      // Change the log file path
-LOG_GET_STORAGE_FILE_PATH()          // Get the current log file path
-LOG_PRINT_FILE(format, ...)          // Write formatted text to file storage (no newline)
-LOG_PRINTLN_FILE(format, ...)        // Write formatted text to file storage with newline
+LOG_SET_FILE_STORAGE(fs)             // Initialize file storage with a filesystem
+LOG_SET_FILE_LOG_LEVEL(level)       // Change file log level at runtime
+LOG_GET_FILE_LOG_LEVEL()            // Get current file log level
+LOG_FLUSH_FILE()                    // Flush buffer to file
+LOG_CLOSE_FILE()                    // Close the log file
+LOG_SET_FILE_PATH(path)             // Change the log file path
+LOG_GET_FILE_PATH()                 // Get the current log file path
+LOG_PRINT_FILE(format, ...)         // Write formatted text to file (no newline)
+LOG_PRINTLN_FILE(format, ...)       // Write formatted text to file with newline
 ```
 
 ## Dependencies
@@ -540,7 +540,7 @@ Demonstrates customizing the log preamble and formatting.
 ### [Assert Example](examples/assert/)
 Assertions, check macros, and custom panic handlers.
 
-### [Storage Example](examples/storage/)
+### [File storage example](examples/file_storage/)
 File storage with LittleFS, SPIFFS, SD, and SdFat.
 
 ### [Benchmark Example](examples/benchmark/)

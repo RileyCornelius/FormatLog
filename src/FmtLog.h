@@ -36,19 +36,19 @@ LOG_STATIC_BUFFER_SIZE                  (default: 128)
 LOG_STREAM                              (default: Serial)
 LOG_PRINT_ENABLE                        (default: 1)
 LOG_ASSERT_ENABLE                       (default: 1)
-LOG_STORAGE_ENABLE                      (default: 0)
+LOG_FILE_ENABLE                         (default: 0)
 
 LOG_BENCHMARK_LOG                       (default: LOG_DEBUG)
 LOG_BENCHMARK_FORMAT                    (default: "[{}] elapsed {} ms")
 LOG_BENCHMARK_MICRO_FORMAT              (default: "[{}] elapsed {} us")
 
-Storage settings (when LOG_STORAGE_ENABLE is 1):
-   LOG_STORAGE_LEVEL                    (default: LOG_LEVEL_WARN)
-   LOG_STORAGE_FILE_PATH                (default: "/log.txt")
-   LOG_STORAGE_MAX_BUFFER_SIZE          (default: 4096)
-   LOG_STORAGE_MAX_FILE_SIZE            (default: 102400)
-   LOG_STORAGE_MAX_FILES                (default: 3, 0 = no rotation)
-   LOG_STORAGE_NEW_FILE_ON_BOOT         (default: 0)
+File storage settings (when LOG_FILE_ENABLE is 1):
+   LOG_FILE_LEVEL                       (default: LOG_LEVEL_WARN)
+   LOG_FILE_PATH                        (default: "/log.txt")
+   LOG_FILE_MAX_BUFFER_SIZE             (default: 4096)
+   LOG_FILE_MAX_SIZE                    (default: 102400)
+   LOG_FILE_MAX_FILES                   (default: 3, 0 = no rotation)
+   LOG_FILE_NEW_ON_BOOT                 (default: 0)
 */
 
 // Serial Settings
@@ -74,27 +74,27 @@ Storage settings (when LOG_STORAGE_ENABLE is 1):
 #define LOG_STREAM Serial
 #endif
 
-// Storage Settings
-#ifndef LOG_STORAGE_ENABLE
-#define LOG_STORAGE_ENABLE 1
+// File storage settings
+#ifndef LOG_FILE_ENABLE
+#define LOG_FILE_ENABLE 1
 #endif
-#ifndef LOG_STORAGE_LEVEL
-#define LOG_STORAGE_LEVEL LOG_LEVEL_WARN
+#ifndef LOG_FILE_LEVEL
+#define LOG_FILE_LEVEL LOG_LEVEL_WARN
 #endif
-#ifndef LOG_STORAGE_FILE_PATH
-#define LOG_STORAGE_FILE_PATH "/log.txt"
+#ifndef LOG_FILE_PATH
+#define LOG_FILE_PATH "/log.txt"
 #endif
-#ifndef LOG_STORAGE_MAX_BUFFER_SIZE
-#define LOG_STORAGE_MAX_BUFFER_SIZE 4096
+#ifndef LOG_FILE_MAX_BUFFER_SIZE
+#define LOG_FILE_MAX_BUFFER_SIZE 4096
 #endif
-#ifndef LOG_STORAGE_MAX_FILE_SIZE
-#define LOG_STORAGE_MAX_FILE_SIZE 102400
+#ifndef LOG_FILE_MAX_SIZE
+#define LOG_FILE_MAX_SIZE 102400
 #endif
-#ifndef LOG_STORAGE_MAX_FILES
-#define LOG_STORAGE_MAX_FILES 3
+#ifndef LOG_FILE_MAX_FILES
+#define LOG_FILE_MAX_FILES 3
 #endif
-#ifndef LOG_STORAGE_NEW_FILE_ON_BOOT
-#define LOG_STORAGE_NEW_FILE_ON_BOOT 1
+#ifndef LOG_FILE_NEW_ON_BOOT
+#define LOG_FILE_NEW_ON_BOOT 1
 #endif
 
 #include <FormatLog.h>
