@@ -1,6 +1,6 @@
 {
     "name": "FormatLog",
-    "version": "0.6.2",
+    "version": "0.7.0",
     "description": "A modern logging library using {fmt} library for Arduino.",
     "keywords": "logging, logger, fmt, fmtlib, format",
     "license": "MIT",
