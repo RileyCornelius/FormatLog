@@ -1,7 +1,7 @@
 #pragma once
 
 /**
- * Include this header AFTER FormatLog.h (or your Log.h) in a .cpp file to
+ * Include this header AFTER FormatLog.h in a .cpp file to
  * disable all logging output macros in that translation unit only.
  * ASSERT, CHECK_OR_RETURN, and CHECK_OR_RETURN_VALUE remain active.
  */

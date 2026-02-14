@@ -189,13 +189,29 @@ namespace fmtlog
 
 #if LOG_STORAGE_ENABLE
         template <typename T>
-        void printStorage(const T &message)
+        void printFile(const T &message)
         {
-            printStorage("{}", message);
+            printFile("{}", message);
         }
 
         template <typename... Args>
-        void printStorage(fmt::format_string<Args...> format, Args &&...args)
+        void printFile(fmt::format_string<Args...> format, Args &&...args)
+        {
+            if (!storage)
+                return;
+            fmt::basic_memory_buffer<char, LOG_STATIC_BUFFER_SIZE> buffer;
+            fmt::vformat_to(fmt::appender(buffer), format, fmt::make_format_args(args...));
+            storage->write(buffer.data(), buffer.size());
+        }
+
+        template <typename T>
+        void printlnFile(const T &message)
+        {
+            printlnFile("{}", message);
+        }
+
+        template <typename... Args>
+        void printlnFile(fmt::format_string<Args...> format, Args &&...args)
         {
             if (!storage)
                 return;
@@ -493,40 +509,31 @@ inline void _logBenchmarkCallback(const char *label, uint32_t elapsedMs)
  */
 #define LOG_SET_STORAGE(fs, ...) fmtlog::FormatLog::instance().setStorage(fmtlog::createRotatingStorage(fs, ##__VA_ARGS__))
 /**
- * @brief Sets the minimum log level for storage output.
- * Messages below this level will not be written to the log file.
- *
  * @param level LogLevel to set (e.g. fmtlog::LogLevel::WARN)
  */
 #define LOG_SET_STORAGE_LOG_LEVEL(level) fmtlog::FormatLog::instance().setStorageLogLevel(level)
 /**
- * @brief Gets the current storage log level.
- *
  * @return Current LogLevel used for storage filtering
  */
 #define LOG_GET_STORAGE_LOG_LEVEL() fmtlog::FormatLog::instance().getStorageLogLevel()
 /**
- * @brief Flushes the storage write buffer to the log file.
- * Call this to ensure all buffered log data is written to disk.
+ * Flushes the storage write buffer to the log file.
  */
 #define LOG_FLUSH_STORAGE() fmtlog::FormatLog::instance().flushStorage()
 /**
- * @brief Closes the storage log file.
  * Flushes any remaining data and releases the file handle.
  */
 #define LOG_CLOSE_STORAGE() fmtlog::FormatLog::instance().closeStorage()
 /**
- * @brief Changes the storage log file path at runtime.
- *
  * @param path New file path for the log file (e.g. "/logs/app.txt")
  */
 #define LOG_SET_STORAGE_FILE_PATH(path) fmtlog::FormatLog::instance().setStorageFilePath(path)
 /**
- * @brief Gets the current storage log file path.
- *
  * @return std::string containing the current log file path
  */
 #define LOG_GET_STORAGE_FILE_PATH() fmtlog::FormatLog::instance().getStorageFilePath()
+#define LOG_PRINT_FILE(format, ...) fmtlog::FormatLog::instance().printFile(format, ##__VA_ARGS__)
+#define LOG_PRINTLN_FILE(format, ...) fmtlog::FormatLog::instance().printlnFile(format, ##__VA_ARGS__)
 #else
 #define LOG_SET_STORAGE(fs, ...) ((void)0)
 #define LOG_SET_STORAGE_LOG_LEVEL(level) ((void)0)
@@ -535,6 +542,8 @@ inline void _logBenchmarkCallback(const char *label, uint32_t elapsedMs)
 #define LOG_CLOSE_STORAGE() ((void)0)
 #define LOG_SET_STORAGE_FILE_PATH(path) ((void)0)
 #define LOG_GET_STORAGE_FILE_PATH() std::string("")
+#define LOG_PRINT_FILE(format, ...) ((void)0)
+#define LOG_PRINTLN_FILE(format, ...) ((void)0)
 #endif // LOG_STORAGE_ENABLE
 
 /**--------------------------------------------------------------------------------------

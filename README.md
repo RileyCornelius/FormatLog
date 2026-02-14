@@ -492,6 +492,8 @@ LOG_FLUSH_STORAGE()                  // Flush buffer to file
 LOG_CLOSE_STORAGE()                  // Close the log file
 LOG_SET_STORAGE_FILE_PATH(path)      // Change the log file path
 LOG_GET_STORAGE_FILE_PATH()          // Get the current log file path
+LOG_PRINT_FILE(format, ...)          // Write formatted text to file storage (no newline)
+LOG_PRINTLN_FILE(format, ...)        // Write formatted text to file storage with newline
 ```
 
 ## Dependencies

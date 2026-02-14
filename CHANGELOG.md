@@ -5,6 +5,11 @@
 ### Added
 
 - `DisableFormatLog.h` — include after `FormatLog.h` in a `.cpp` to disable all log output macros in that file (assert/check macros remain active)
+- `LOG_PRINT_FILE(format, ...)` and `LOG_PRINTLN_FILE(format, ...)` macros for writing formatted output directly to file storage
+
+### Changed
+
+- Replaced `FormatLog::printStorage(...)` with `FormatLog::printFile(...)` and `FormatLog::printlnFile(...)`
 
 ## [0.6.2] - 2026-02-06
 
