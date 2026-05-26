@@ -6,15 +6,13 @@
 
 - **Modern Formatting**: Built-in support for [fmtlib](https://github.com/fmtlib/fmt)
 - **Multiple Log Levels**: TRACE, DEBUG, INFO, WARN, ERROR with compile time and run time filtering
-- **Compile-time Configuration**: Zero-overhead for disabled log levels
-- **Flexible Timestamps**: Microseconds, milliseconds, or formatted time (HH:MM:SS:MS)
 - **ANSI Color Support**: Configurable colored output for different log levels
 - **Source Location**: Optional filename, line number, and function name logging
+- **Flexible Timestamps**: Microseconds, milliseconds, or formatted time (HH:MM:SS:MS)
 - **File Storage**: Buffered writes with automatic log rotation (LittleFS, SPIFFS, SD, SdFat)
 - **Benchmarking**: Scoped and manual timing utilities with millisecond and microsecond precision
-- **Stream Support**: Works with any Arduino Stream (Serial, Serial1, etc.)
-- **Assert & Check Macros**: Debug assertions and non-fatal condition checks
-- **Memory Efficient**: Smart buffer management with configurable static buffer size
+- **Asserts**: Debug assertions and condition checks
+- **Buffer**: Buffer messages with configurable options
 - **Type Safety**: Compile-time format string validation and type checking
 - **Custom Preambles**: Fully customizable log message formatting
 
